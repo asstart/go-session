@@ -1,6 +1,6 @@
 name: CI
 
-on: 
+on:
   push:
       branches:
       tags:
@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
