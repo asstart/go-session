@@ -16,7 +16,7 @@ jobs:
         run: |
           go get -v
           go test -timeout=60s -covermode=atomic -coverprofile=$GITHUB_WORKSPACE/coverage_profile.out
-          build -v
+          
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
       
