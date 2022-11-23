@@ -25,5 +25,5 @@ jobs:
 
       - name: Send coverage
         env:
-          COVERALLS_TOKEN: ${{ secrets.COVERAL_GO_SESSION_TOKEN }}
-        run: goveralls -coverprofile=$GITHUB_WORKSPACE/coverage_profile.out -service=github
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: $(go env GOPATH)/bin/goveralls -service="github" -coverprofile=$GITHUB_WORKSPACE/coverage_profile.out
