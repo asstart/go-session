@@ -16,7 +16,7 @@ import (
 )
 
 func TestBadAttribbutes(t *testing.T) {
-	smock := smocks.NewMockSessionStore(gomock.NewController(t))
+	smock := smocks.NewMockStore(gomock.NewController(t))
 
 	service := session.NewService(
 		smock,
@@ -46,7 +46,7 @@ func TestBadAttribbutes(t *testing.T) {
 }
 
 func TestValidAttributes(t *testing.T) {
-	smock := smocks.NewMockSessionStore(gomock.NewController(t))
+	smock := smocks.NewMockStore(gomock.NewController(t))
 
 	service := session.NewService(
 		smock,
@@ -151,7 +151,7 @@ func (sm sesFullMatcher) String() string {
 }
 
 func TestSuccessfulCreatingAnonymSession(t *testing.T) {
-	smock := smocks.NewMockSessionStore(gomock.NewController(t))
+	smock := smocks.NewMockStore(gomock.NewController(t))
 
 	ctx := context.Background()
 	cookieConf := session.DefaultCookieConf()
@@ -183,7 +183,7 @@ func TestSuccessfulCreatingAnonymSession(t *testing.T) {
 }
 
 func TestErrorSavingAnonymSession(t *testing.T) {
-	smock := smocks.NewMockSessionStore(gomock.NewController(t))
+	smock := smocks.NewMockStore(gomock.NewController(t))
 
 	ctx := context.Background()
 	cookieConf := session.DefaultCookieConf()
@@ -208,7 +208,7 @@ func TestErrorSavingAnonymSession(t *testing.T) {
 
 func TestSucessfullCreateUserSession(t *testing.T) {
 
-	smock := smocks.NewMockSessionStore(gomock.NewController(t))
+	smock := smocks.NewMockStore(gomock.NewController(t))
 
 	ctx := context.Background()
 	cookieConf := session.DefaultCookieConf()
@@ -242,7 +242,7 @@ func TestSucessfullCreateUserSession(t *testing.T) {
 }
 
 func TestErrorSavingUserSession(t *testing.T) {
-	smock := smocks.NewMockSessionStore(gomock.NewController(t))
+	smock := smocks.NewMockStore(gomock.NewController(t))
 
 	ctx := context.Background()
 	cookieConf := session.DefaultCookieConf()
@@ -266,7 +266,7 @@ func TestErrorSavingUserSession(t *testing.T) {
 }
 
 func TestLoadSessionErr(t *testing.T) {
-	smock := smocks.NewMockSessionStore(gomock.NewController(t))
+	smock := smocks.NewMockStore(gomock.NewController(t))
 
 	ctx := context.Background()
 
@@ -299,7 +299,7 @@ func TestLoadSessionErr(t *testing.T) {
 }
 
 func TestLoadSessionSuccess(t *testing.T) {
-	smock := smocks.NewMockSessionStore(gomock.NewController(t))
+	smock := smocks.NewMockStore(gomock.NewController(t))
 
 	ctx := context.Background()
 
@@ -322,7 +322,7 @@ func TestLoadSessionSuccess(t *testing.T) {
 }
 
 func TestInvalidateSession(t *testing.T) {
-	smock := smocks.NewMockSessionStore(gomock.NewController(t))
+	smock := smocks.NewMockStore(gomock.NewController(t))
 
 	ctx := context.Background()
 

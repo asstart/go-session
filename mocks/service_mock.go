@@ -12,31 +12,31 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockSessionServiceInterface is a mock of SessionServiceInterface interface.
-type MockSessionServiceInterface struct {
+// MockService is a mock of Service interface.
+type MockService struct {
 	ctrl     *gomock.Controller
-	recorder *MockSessionServiceInterfaceMockRecorder
+	recorder *MockServiceMockRecorder
 }
 
-// MockSessionServiceInterfaceMockRecorder is the mock recorder for MockSessionServiceInterface.
-type MockSessionServiceInterfaceMockRecorder struct {
-	mock *MockSessionServiceInterface
+// MockServiceMockRecorder is the mock recorder for MockService.
+type MockServiceMockRecorder struct {
+	mock *MockService
 }
 
-// NewMockSessionServiceInterface creates a new mock instance.
-func NewMockSessionServiceInterface(ctrl *gomock.Controller) *MockSessionServiceInterface {
-	mock := &MockSessionServiceInterface{ctrl: ctrl}
-	mock.recorder = &MockSessionServiceInterfaceMockRecorder{mock}
+// NewMockService creates a new mock instance.
+func NewMockService(ctrl *gomock.Controller) *MockService {
+	mock := &MockService{ctrl: ctrl}
+	mock.recorder = &MockServiceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockSessionServiceInterface) EXPECT() *MockSessionServiceInterfaceMockRecorder {
+func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
 // CreateAnonymSession mocks base method.
-func (m *MockSessionServiceInterface) CreateAnonymSession(ctx context.Context, cc session.CookieConf, sc session.Conf, keyAndValues ...interface{}) (*session.Session, error) {
+func (m *MockService) CreateAnonymSession(ctx context.Context, cc session.CookieConf, sc session.Conf, keyAndValues ...interface{}) (*session.Session, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, cc, sc}
 	for _, a := range keyAndValues {
@@ -49,14 +49,14 @@ func (m *MockSessionServiceInterface) CreateAnonymSession(ctx context.Context, c
 }
 
 // CreateAnonymSession indicates an expected call of CreateAnonymSession.
-func (mr *MockSessionServiceInterfaceMockRecorder) CreateAnonymSession(ctx, cc, sc interface{}, keyAndValues ...interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) CreateAnonymSession(ctx, cc, sc interface{}, keyAndValues ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, cc, sc}, keyAndValues...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAnonymSession", reflect.TypeOf((*MockSessionServiceInterface)(nil).CreateAnonymSession), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAnonymSession", reflect.TypeOf((*MockService)(nil).CreateAnonymSession), varargs...)
 }
 
 // CreateUserSession mocks base method.
-func (m *MockSessionServiceInterface) CreateUserSession(ctx context.Context, uid string, cc session.CookieConf, sc session.Conf, keyAndValues ...interface{}) (*session.Session, error) {
+func (m *MockService) CreateUserSession(ctx context.Context, uid string, cc session.CookieConf, sc session.Conf, keyAndValues ...interface{}) (*session.Session, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, uid, cc, sc}
 	for _, a := range keyAndValues {
@@ -69,14 +69,14 @@ func (m *MockSessionServiceInterface) CreateUserSession(ctx context.Context, uid
 }
 
 // CreateUserSession indicates an expected call of CreateUserSession.
-func (mr *MockSessionServiceInterfaceMockRecorder) CreateUserSession(ctx, uid, cc, sc interface{}, keyAndValues ...interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) CreateUserSession(ctx, uid, cc, sc interface{}, keyAndValues ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, uid, cc, sc}, keyAndValues...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserSession", reflect.TypeOf((*MockSessionServiceInterface)(nil).CreateUserSession), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserSession", reflect.TypeOf((*MockService)(nil).CreateUserSession), varargs...)
 }
 
 // InvalidateSession mocks base method.
-func (m *MockSessionServiceInterface) InvalidateSession(ctx context.Context, sid string) error {
+func (m *MockService) InvalidateSession(ctx context.Context, sid string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InvalidateSession", ctx, sid)
 	ret0, _ := ret[0].(error)
@@ -84,13 +84,13 @@ func (m *MockSessionServiceInterface) InvalidateSession(ctx context.Context, sid
 }
 
 // InvalidateSession indicates an expected call of InvalidateSession.
-func (mr *MockSessionServiceInterfaceMockRecorder) InvalidateSession(ctx, sid interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) InvalidateSession(ctx, sid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InvalidateSession", reflect.TypeOf((*MockSessionServiceInterface)(nil).InvalidateSession), ctx, sid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InvalidateSession", reflect.TypeOf((*MockService)(nil).InvalidateSession), ctx, sid)
 }
 
 // LoadSession mocks base method.
-func (m *MockSessionServiceInterface) LoadSession(ctx context.Context, sid string) (*session.Session, error) {
+func (m *MockService) LoadSession(ctx context.Context, sid string) (*session.Session, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadSession", ctx, sid)
 	ret0, _ := ret[0].(*session.Session)
@@ -99,7 +99,7 @@ func (m *MockSessionServiceInterface) LoadSession(ctx context.Context, sid strin
 }
 
 // LoadSession indicates an expected call of LoadSession.
-func (mr *MockSessionServiceInterfaceMockRecorder) LoadSession(ctx, sid interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) LoadSession(ctx, sid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSession", reflect.TypeOf((*MockSessionServiceInterface)(nil).LoadSession), ctx, sid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSession", reflect.TypeOf((*MockService)(nil).LoadSession), ctx, sid)
 }
