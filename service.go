@@ -164,7 +164,7 @@ func (ss *sessionService) LoadSession(ctx context.Context, sid string) (*Session
 	return s, nil
 }
 
-//InvalidateSession invalidate session in storage based on implementation of Store
+// InvalidateSession invalidate session in storage based on implementation of Store
 func (ss *sessionService) InvalidateSession(ctx context.Context, sid string) error {
 	ss.Logger.V(0).Info("session.InvalidateSession() started", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
 	defer ss.Logger.V(0).Info("session.InvalidateSession() finished", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))

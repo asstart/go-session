@@ -110,7 +110,7 @@ func NewSession() (Session, error) {
 	return s, nil
 }
 
-//WithUserID add user identity to the session
+// WithUserID add user identity to the session
 func (s *Session) WithUserID(uid string) {
 	s.UID = uid
 	s.Anonym = false
