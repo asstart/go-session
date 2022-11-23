@@ -8,8 +8,6 @@ import (
 	"github.com/go-logr/logr"
 )
 
-var UIDAttr CtxKey = "uid"
-
 const (
 	LogKeySID        = "session.sid"
 	LogKeyRQID       = "session.rqud"
@@ -33,15 +31,14 @@ type sessionService struct {
 
 /*
 
-Create implementation of SessionServiceInterface to work with session
+NewService Create implementation of Service to work with session
 
-logr.Logger may be useful only for debugging purposes.
-All messages will be logged as logr.V = 10
-and none of errors will be logged as logr.Error.
+logr.Logger may be useful only for debugging purposes,
+Nnone of errors will be logged as logr.Error.
 It's up to service that call these methods
 to decide what is really error in terms of application and what is not.
 
-reqIdKey is key to extract request id from context
+reqIDKey is key to extract request id from the context
 
 */
 func NewService(s Store, l logr.Logger, reqIDKey interface{}) Service {
@@ -53,6 +50,8 @@ func NewService(s Store, l logr.Logger, reqIDKey interface{}) Service {
 	return &ss
 }
 
+// CreateAnonymSession create new anonym session, store it based on provided implementation of Store and return
+// keyAndValues attributes which should be added to a session during creation
 func (ss *sessionService) CreateAnonymSession(ctx context.Context, cc CookieConf, sc Conf, keyAndValues ...interface{}) (*Session, error) {
 	ss.Logger.V(0).Info(
 		"session.CreateAnonymSession() started",
@@ -108,6 +107,8 @@ func (ss *sessionService) CreateAnonymSession(ctx context.Context, cc CookieConf
 	return svdS, nil
 }
 
+// CreateUserSession create new session, store it based on provided implementation of Store and return
+// keyAndValues attributes which should be added to a session during creation
 func (ss *sessionService) CreateUserSession(ctx context.Context, uid string, cc CookieConf, sc Conf, keyAndValues ...interface{}) (*Session, error) {
 	ss.Logger.V(0).Info("session.CreateUserSession() started", LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
 	defer ss.Logger.V(0).Info("session.CreateUserSession() finished", LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
@@ -140,6 +141,7 @@ func (ss *sessionService) CreateUserSession(ctx context.Context, uid string, cc 
 	return svdS, nil
 }
 
+// LoadSession return session loaded from storage based on implementation of Store
 func (ss *sessionService) LoadSession(ctx context.Context, sid string) (*Session, error) {
 	ss.Logger.V(0).Info("session.LoadSession() started", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
 	defer ss.Logger.V(0).Info("session.LoadSession() finished", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
@@ -162,6 +164,7 @@ func (ss *sessionService) LoadSession(ctx context.Context, sid string) (*Session
 	return s, nil
 }
 
+//InvalidateSession invalidate session in storage based on implementation of Store
 func (ss *sessionService) InvalidateSession(ctx context.Context, sid string) error {
 	ss.Logger.V(0).Info("session.InvalidateSession() started", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
 	defer ss.Logger.V(0).Info("session.InvalidateSession() finished", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))

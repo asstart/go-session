@@ -8,6 +8,18 @@ import (
 	"time"
 )
 
+// Session is representation of session in terms of current module.
+// Data - should be used to store any data within a session.
+//
+// IdleTimeout and LastAccessedAt will be used to expire session based
+// on user activity within the session.
+//
+// AbsTimeout and CreatedAt will be used to expire session based
+// on full session lifetime.
+//
+// UID is supposed to store user identity who session belongs to.
+//
+// Anonym is supposed to use during authentication process.
 type Session struct {
 	ID   string
 	Data map[CtxKey]interface{}
@@ -34,6 +46,7 @@ const (
 	SameSiteNoneMode
 )
 
+// CookieConf contains cookie parameters
 type CookieConf struct {
 	Path     string
 	Domain   string
@@ -43,11 +56,13 @@ type CookieConf struct {
 	SameSite SameSite
 }
 
+// Conf contains session parameters
 type Conf struct {
 	IdleTimeout time.Duration
 	AbsTimout   time.Duration
 }
 
+// CtxKey type alias for session data attributes keys
 type CtxKey string
 
 var (
@@ -72,6 +87,12 @@ func DefaultSessionConf() Conf {
 	}
 }
 
+// NewSession return new session with default configuration
+// IdleTimeout = 24h
+// AbsTimeout = 7d
+// Anonym = true
+// Active = true
+// Opts: Secure, HTTPOnly, Strict
 func NewSession() (Session, error) {
 	id, err := generateSessionID()
 	if err != nil {
@@ -89,29 +110,36 @@ func NewSession() (Session, error) {
 	return s, nil
 }
 
+//WithUserID add user identity to the session
 func (s *Session) WithUserID(uid string) {
 	s.UID = uid
 	s.Anonym = false
 }
 
+// WithCookieConf add cookie to the session
 func (s *Session) WithCookieConf(cc CookieConf) {
 	s.Opts = cc
 }
 
+// WithSessionConf configure session timeouts
 func (s *Session) WithSessionConf(sc Conf) {
 	s.IdleTimeout = sc.IdleTimeout
 	s.AbsTimeout = sc.AbsTimout
 }
 
+// AddAttribute add a new attribute to the session
 func (s *Session) AddAttribute(k CtxKey, v interface{}) {
 	s.Data[k] = v
 }
 
+// GetAttribute return a value from the session
+// It return nill and false if attribute doesn't exists
 func (s *Session) GetAttribute(k CtxKey) (interface{}, bool) {
 	v, ok := s.Data[k]
 	return v, ok
 }
 
+// IsExpired check if session is expired
 func (s *Session) IsExpired() bool {
 	if !s.Active {
 		return true
@@ -130,6 +158,7 @@ func (s *Session) IsExpired() bool {
 	return false
 }
 
+// ValidateSessionID validate session id format
 func ValidateSessionID(sid string) error {
 	if len(sid) != base32enc.EncodedLen(keyLen) {
 		return fmt.Errorf("error validating session: wrong session id length")
