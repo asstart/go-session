@@ -10,7 +10,7 @@ import (
 
 type Session struct {
 	ID   string
-	Data map[SessionKey]interface{}
+	Data map[CtxKey]interface{}
 	Opts CookieConf
 
 	Anonym bool
@@ -38,17 +38,17 @@ type CookieConf struct {
 	Path     string
 	Domain   string
 	Secure   bool
-	HttpOnly bool
+	HTTPOnly bool
 	MaxAge   int
 	SameSite SameSite
 }
 
-type SessionConf struct {
+type Conf struct {
 	IdleTimeout time.Duration
 	AbsTimout   time.Duration
 }
 
-type SessionKey string
+type CtxKey string
 
 var (
 	base32enc = base32.StdEncoding.WithPadding(base32.NoPadding)
@@ -58,28 +58,28 @@ var (
 func DefaultCookieConf() CookieConf {
 	return CookieConf{
 		Secure:   true,
-		HttpOnly: true,
+		HTTPOnly: true,
 		Path:     "/",
 		MaxAge:   24 * 60 * 60,
 		SameSite: SameSiteStrictMode,
 	}
 }
 
-func DefaultSessionConf() SessionConf {
-	return SessionConf{
+func DefaultSessionConf() Conf {
+	return Conf{
 		AbsTimout:   24 * 7 * time.Hour,
 		IdleTimeout: 24 * time.Hour,
 	}
 }
 
 func NewSession() (Session, error) {
-	id, err := generateSessionId()
+	id, err := generateSessionID()
 	if err != nil {
 		return Session{}, err
 	}
 	s := Session{
 		ID:          id,
-		Data:        make(map[SessionKey]interface{}),
+		Data:        make(map[CtxKey]interface{}),
 		Opts:        DefaultCookieConf(),
 		Anonym:      true,
 		Active:      true,
@@ -89,7 +89,7 @@ func NewSession() (Session, error) {
 	return s, nil
 }
 
-func (s *Session) WithUserId(uid string) {
+func (s *Session) WithUserID(uid string) {
 	s.UID = uid
 	s.Anonym = false
 }
@@ -98,16 +98,16 @@ func (s *Session) WithCookieConf(cc CookieConf) {
 	s.Opts = cc
 }
 
-func (s *Session) WithSessionConf(sc SessionConf) {
+func (s *Session) WithSessionConf(sc Conf) {
 	s.IdleTimeout = sc.IdleTimeout
 	s.AbsTimeout = sc.AbsTimout
 }
 
-func (s *Session) AddAttribute(k SessionKey, v interface{}) {
+func (s *Session) AddAttribute(k CtxKey, v interface{}) {
 	s.Data[k] = v
 }
 
-func (s *Session) GetAttribute(k SessionKey) (interface{}, bool) {
+func (s *Session) GetAttribute(k CtxKey) (interface{}, bool) {
 	v, ok := s.Data[k]
 	return v, ok
 }
@@ -130,7 +130,7 @@ func (s *Session) IsExpired() bool {
 	return false
 }
 
-func ValidateSessionId(sid string) error {
+func ValidateSessionID(sid string) error {
 	if len(sid) != base32enc.EncodedLen(keyLen) {
 		return fmt.Errorf("error validating session: wrong session id length")
 	}
@@ -141,7 +141,7 @@ func ValidateSessionId(sid string) error {
 	return nil
 }
 
-func generateSessionId() (string, error) {
+func generateSessionID() (string, error) {
 	id := make([]byte, keyLen)
 	_, err := io.ReadFull(rand.Reader, id)
 	if err != nil {
