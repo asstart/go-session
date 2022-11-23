@@ -17,49 +17,38 @@ import (
 type mongoStore struct {
 	Collecction *mongo.Collection
 	Logger      logr.Logger
-	CtxReqIdKey interface{}
+	CtxReqIDKey interface{}
 }
 
-func NewMongoStore(c *mongo.Collection, l logr.Logger, reqIdKey interface{}) session.SessionStore {
+func NewMongoStore(c *mongo.Collection, l logr.Logger, reqIDKey interface{}) session.Store {
 	return &mongoStore{
 		Collecction: c,
 		Logger:      l,
-		CtxReqIdKey: reqIdKey,
+		CtxReqIDKey: reqIDKey,
 	}
 }
 
 type mngSession struct {
-	ID             primitive.ObjectID                 `bson:"_id"`
-	SID            string                             `bson:"sid"`
-	Data           map[session.SessionKey]interface{} `bson:"data,omitempty"`
-	Opts           mngCookieConf                      `bson:"opts"`
-	Anonym         bool                               `bson:"anonym"`
-	Active         bool                               `bson:"active"`
-	UID            string                             `bson:"uid"`
-	IdleTimeout    time.Duration                      `bson:"idle_timeout"`
-	AbsTimeout     time.Duration                      `bson:"abs_timeout"`
-	LastAccessedAt time.Time                          `bson:"last_accessed_at"`
-	CreatedAt      time.Time                          `bson:"created_at"`
+	ID             primitive.ObjectID             `bson:"_id"`
+	SID            string                         `bson:"sid"`
+	Data           map[session.CtxKey]interface{} `bson:"data,omitempty"`
+	Opts           mngCookieConf                  `bson:"opts"`
+	Anonym         bool                           `bson:"anonym"`
+	Active         bool                           `bson:"active"`
+	UID            string                         `bson:"uid"`
+	IdleTimeout    time.Duration                  `bson:"idle_timeout"`
+	AbsTimeout     time.Duration                  `bson:"abs_timeout"`
+	LastAccessedAt time.Time                      `bson:"last_accessed_at"`
+	CreatedAt      time.Time                      `bson:"created_at"`
 }
 
 type mngCookieConf struct {
 	Path     string           `bson:"path"`
 	Domain   string           `bson:"domain"`
 	Secure   bool             `bson:"secure"`
-	HttpOnly bool             `bson:"http_only"`
+	HTTPOnly bool             `bson:"http_only"`
 	MaxAge   int              `bson:"max_age"`
 	SameSite session.SameSite `bson:"same_site"`
-}
-
-func toMngCookieConf(c session.CookieConf) mngCookieConf {
-	return mngCookieConf{
-		Path:     c.Path,
-		Domain:   c.Domain,
-		Secure:   c.Secure,
-		HttpOnly: c.HttpOnly,
-		MaxAge:   c.MaxAge,
-		SameSite: c.SameSite,
-	}
 }
 
 func fromMngCookieConf(c mngCookieConf) session.CookieConf {
@@ -67,30 +56,13 @@ func fromMngCookieConf(c mngCookieConf) session.CookieConf {
 		Path:     c.Path,
 		Domain:   c.Domain,
 		Secure:   c.Secure,
-		HttpOnly: c.HttpOnly,
+		HTTPOnly: c.HTTPOnly,
 		MaxAge:   c.MaxAge,
 		SameSite: c.SameSite,
 	}
 }
 
-func toMngSession(s session.Session) (mngSession, error) {
-
-	return mngSession{
-		ID:             primitive.NewObjectID(),
-		SID:            s.ID,
-		Data:           s.Data,
-		Opts:           toMngCookieConf(s.Opts),
-		Anonym:         s.Anonym,
-		Active:         s.Active,
-		UID:            s.UID,
-		IdleTimeout:    s.IdleTimeout,
-		AbsTimeout:     s.AbsTimeout,
-		LastAccessedAt: s.LastAccessedAt,
-		CreatedAt:      s.CreatedAt,
-	}, nil
-}
-
-func fromMngSession(s mngSession) session.Session {
+func fromMngSession(s *mngSession) session.Session {
 
 	return session.Session{
 		ID:             s.SID,
@@ -106,10 +78,10 @@ func fromMngSession(s mngSession) session.Session {
 	}
 }
 
-func (ms *mongoStore) Save(ctx context.Context, s session.Session) (session.Session, error) {
+func (ms *mongoStore) Save(ctx context.Context, s *session.Session) (*session.Session, error) {
 
-	ms.Logger.V(0).Info("session.mongo.Save() started", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey))
-	defer ms.Logger.V(0).Info("session.mongo.Save() finished", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey))
+	ms.Logger.V(0).Info("session.mongo.Save() started", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+	defer ms.Logger.V(0).Info("session.mongo.Save() finished", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 
 	f := bson.D{
 		{"_id", primitive.NewObjectID()},
@@ -122,7 +94,7 @@ func (ms *mongoStore) Save(ctx context.Context, s session.Session) (session.Sess
 				{"path", s.Opts.Path},
 				{"domain", s.Opts.Domain},
 				{"secure", s.Opts.Secure},
-				{"http_only", s.Opts.HttpOnly},
+				{"http_only", s.Opts.HTTPOnly},
 				{"max_age", s.Opts.MaxAge},
 				{"same_site", s.Opts.SameSite},
 			}},
@@ -154,28 +126,30 @@ func (ms *mongoStore) Save(ctx context.Context, s session.Session) (session.Sess
 		ms.Logger.V(0).Info(
 			"session.mongo.Save() error",
 			session.LogKeySID, s.ID,
-			session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey),
+			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
 			session.LogKeyDebugError, err)
-		return session.Session{}, err
+		return nil, err
 	}
 
 	var updS mngSession
 	if err := sr.Decode(&updS); err != nil {
-		err := fmt.Errorf("session.mongo.Save() Decode result error: %w", err)
+		err = fmt.Errorf("session.mongo.Save() Decode result error: %w", err)
 		ms.Logger.V(0).Info(
 			"session.mongo.Save() error",
 			session.LogKeySID, s.ID,
-			session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey),
+			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
 			session.LogKeyDebugError, err)
-		return session.Session{}, err
+		return nil, err
 	}
 
-	return fromMngSession(updS), nil
+	r := fromMngSession(&updS)
+
+	return &r, nil
 }
 
 func (ms *mongoStore) Invalidate(ctx context.Context, sid string) error {
-	ms.Logger.V(0).Info("session.mongo.Invalidate() started", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey))
-	defer ms.Logger.V(0).Info("session.mongo.Invalidate() finished", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey))
+	ms.Logger.V(0).Info("session.mongo.Invalidate() started", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+	defer ms.Logger.V(0).Info("session.mongo.Invalidate() finished", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 
 	f := bson.D{
 		{"sid", sid},
@@ -192,20 +166,20 @@ func (ms *mongoStore) Invalidate(ctx context.Context, sid string) error {
 
 	_, err := ms.Collecction.UpdateOne(ctx, f, op)
 	if err != nil {
-		err := fmt.Errorf("session.mongo.Invalidate error: %w", err)
+		err = fmt.Errorf("session.mongo.Invalidate error: %w", err)
 		ms.Logger.V(0).Info(
 			"session.mongo.Invalidate() error",
 			session.LogKeySID, sid,
-			session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey),
+			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
 			session.LogKeyDebugError, err)
 		return err
 	}
 	return nil
 }
 
-func (ms *mongoStore) Update(ctx context.Context, s session.Session) (session.Session, error) {
-	ms.Logger.V(0).Info("session.mongo.Update() started", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey))
-	defer ms.Logger.V(0).Info("session.mongo.Update() finished", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey))
+func (ms *mongoStore) Update(ctx context.Context, s *session.Session) (*session.Session, error) {
+	ms.Logger.V(0).Info("session.mongo.Update() started", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+	defer ms.Logger.V(0).Info("session.mongo.Update() finished", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 	f := bson.D{
 		{"sid", s.ID},
 	}
@@ -216,7 +190,7 @@ func (ms *mongoStore) Update(ctx context.Context, s session.Session) (session.Se
 				{"path", s.Opts.Path},
 				{"domain", s.Opts.Domain},
 				{"secure", s.Opts.Secure},
-				{"http_only", s.Opts.HttpOnly},
+				{"http_only", s.Opts.HTTPOnly},
 				{"max_age", s.Opts.MaxAge},
 				{"same_site", s.Opts.SameSite},
 			}},
@@ -246,28 +220,30 @@ func (ms *mongoStore) Update(ctx context.Context, s session.Session) (session.Se
 		ms.Logger.V(0).Info(
 			"session.mongo.Update() error",
 			session.LogKeySID, s.ID,
-			session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey),
+			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
 			session.LogKeyDebugError, err)
-		return session.Session{}, err
+		return nil, err
 	}
 
-	var updS session.Session
+	var updS mngSession
 	if err := sr.Decode(updS); err != nil {
 		err := fmt.Errorf("session.mongo.Update() Decode error: %w", sr.Err())
 		ms.Logger.V(0).Info(
 			"session.mongo.Update() error",
 			session.LogKeySID, s.ID,
-			session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey),
+			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
 			session.LogKeyDebugError, err)
-		return session.Session{}, err
+		return nil, err
 	}
 
-	return updS, nil
+	r := fromMngSession(&updS)
+
+	return &r, nil
 }
 
-func (ms *mongoStore) Load(ctx context.Context, sid string) (session.Session, error) {
-	ms.Logger.V(0).Info("session.mongo.Load() started", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey))
-	defer ms.Logger.V(0).Info("session.mongo.Load() finished", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey))
+func (ms *mongoStore) Load(ctx context.Context, sid string) (*session.Session, error) {
+	ms.Logger.V(0).Info("session.mongo.Load() started", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+	defer ms.Logger.V(0).Info("session.mongo.Load() finished", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 
 	f := bson.D{
 		{"sid", sid},
@@ -285,19 +261,21 @@ func (ms *mongoStore) Load(ctx context.Context, sid string) (session.Session, er
 	err := ms.Collecction.FindOneAndUpdate(ctx, f, upd, opts).Decode(&s)
 
 	if err == mongo.ErrNoDocuments {
-		ms.Logger.V(0).Info("session.mong.Load() session not found", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey))
-		return session.Session{}, session.ErrSessionNotFound
+		ms.Logger.V(0).Info("session.mong.Load() session not found", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+		return nil, session.ErrSessionNotFound
 	}
 
 	if err != nil {
-		err := fmt.Errorf("session.mong.Load() FindOneAndUpdate() unexpected error: %w", err)
+		err = fmt.Errorf("session.mong.Load() FindOneAndUpdate() unexpected error: %w", err)
 		ms.Logger.V(0).Info("session.mong.Load() session not found",
 			session.LogKeySID, sid,
-			session.LogKeyRQID, ctx.Value(ms.CtxReqIdKey),
+			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
 			session.LogKeyDebugError, err)
 
-		return session.Session{}, err
+		return nil, err
 	}
 
-	return fromMngSession(s), nil
+	r := fromMngSession(&s)
+
+	return &r, nil
 }

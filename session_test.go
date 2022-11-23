@@ -12,7 +12,7 @@ import (
 
 func TestSessionValidationSuccess(t *testing.T) {
 	sid := "A7TF7SGM5WZRW7WMGY7BRJPQOGWGXATZWT35HXPKHRO3DU2J3L4Q"
-	err := session.ValidateSessionId(sid)
+	err := session.ValidateSessionID(sid)
 	assert.Nil(t, err)
 }
 
@@ -31,7 +31,7 @@ func TestSessionValidationFail(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			err := session.ValidateSessionId(tc.sid)
+			err := session.ValidateSessionID(tc.sid)
 			assert.Equal(t, tc.expErr.Error(), err.Error())
 		})
 	}

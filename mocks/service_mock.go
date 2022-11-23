@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	go_session "github.com/asstart/go-session"
+	session "github.com/asstart/go-session"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,14 +36,14 @@ func (m *MockSessionServiceInterface) EXPECT() *MockSessionServiceInterfaceMockR
 }
 
 // CreateAnonymSession mocks base method.
-func (m *MockSessionServiceInterface) CreateAnonymSession(ctx context.Context, cc go_session.CookieConf, sc go_session.SessionConf, keyAndValues ...interface{}) (go_session.Session, error) {
+func (m *MockSessionServiceInterface) CreateAnonymSession(ctx context.Context, cc session.CookieConf, sc session.Conf, keyAndValues ...interface{}) (*session.Session, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, cc, sc}
 	for _, a := range keyAndValues {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "CreateAnonymSession", varargs...)
-	ret0, _ := ret[0].(go_session.Session)
+	ret0, _ := ret[0].(*session.Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -56,14 +56,14 @@ func (mr *MockSessionServiceInterfaceMockRecorder) CreateAnonymSession(ctx, cc, 
 }
 
 // CreateUserSession mocks base method.
-func (m *MockSessionServiceInterface) CreateUserSession(ctx context.Context, uid string, cc go_session.CookieConf, sc go_session.SessionConf, keyAndValues ...interface{}) (go_session.Session, error) {
+func (m *MockSessionServiceInterface) CreateUserSession(ctx context.Context, uid string, cc session.CookieConf, sc session.Conf, keyAndValues ...interface{}) (*session.Session, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, uid, cc, sc}
 	for _, a := range keyAndValues {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "CreateUserSession", varargs...)
-	ret0, _ := ret[0].(go_session.Session)
+	ret0, _ := ret[0].(*session.Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -90,10 +90,10 @@ func (mr *MockSessionServiceInterfaceMockRecorder) InvalidateSession(ctx, sid in
 }
 
 // LoadSession mocks base method.
-func (m *MockSessionServiceInterface) LoadSession(ctx context.Context, sid string) (go_session.Session, error) {
+func (m *MockSessionServiceInterface) LoadSession(ctx context.Context, sid string) (*session.Session, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadSession", ctx, sid)
-	ret0, _ := ret[0].(go_session.Session)
+	ret0, _ := ret[0].(*session.Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

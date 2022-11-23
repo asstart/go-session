@@ -35,14 +35,12 @@ func TestBadAttribbutes(t *testing.T) {
 		{"invalid int key", []interface{}{1, "value"}, "session.CreateAnonymSession() error: can't convert key of type: int to session.SessionKey"},
 	}
 
-	emptySes := session.Session{}
-
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			s, err := service.CreateAnonymSession(context.Background(), session.DefaultCookieConf(), session.DefaultSessionConf(), tc.kv...)
 			assert.NotNil(t, err)
 			assert.Equal(t, tc.expErr, err.Error())
-			assert.Equal(t, emptySes, s)
+			assert.Nil(t, s)
 		})
 	}
 }
@@ -56,33 +54,35 @@ func TestValidAttributes(t *testing.T) {
 		"key",
 	)
 
-	var k1 session.SessionKey = "key1"
-	var k2 session.SessionKey = "key2"
+	var k1 session.CtxKey = "key1"
+	var k2 session.CtxKey = "key2"
 
 	tt := []struct {
 		name         string
 		kv           []interface{}
 		expAttrCount int
-		expData      map[session.SessionKey]interface{}
+		expData      map[session.CtxKey]interface{}
 	}{
-		{"empty key value pairs", []interface{}{}, 0, make(map[session.SessionKey]interface{})},
-		{"single pair", []interface{}{k1, "string value"}, 1, map[session.SessionKey]interface{}{k1: "string value"}},
-		{"multiple pair", []interface{}{k1, "string value", k2, "string value 2"}, 2, map[session.SessionKey]interface{}{k1: "string value", k2: "string value 2"}},
-		{"int value", []interface{}{k1, 1}, 1, map[session.SessionKey]interface{}{k1: 1}},
-		{"float value", []interface{}{k1, 1.0}, 1, map[session.SessionKey]interface{}{k1: 1.0}},
-		{"bool value", []interface{}{k1, true}, 1, map[session.SessionKey]interface{}{k1: true}},
-		{"array value", []interface{}{k1, [1]int{1}}, 1, map[session.SessionKey]interface{}{k1: [1]int{1}}},
-		{"slice value", []interface{}{k1, []int{1, 2}}, 1, map[session.SessionKey]interface{}{k1: []int{1, 2}}},
-		{"struct value", []interface{}{k1, struct{}{}}, 1, map[session.SessionKey]interface{}{k1: struct{}{}}},
-		{"map value", []interface{}{k1, make(map[string]string, 1)}, 1, map[session.SessionKey]interface{}{k1: make(map[string]string, 1)}},
+		{"empty key value pairs", []interface{}{}, 0, make(map[session.CtxKey]interface{})},
+		{"single pair", []interface{}{k1, "string value"}, 1, map[session.CtxKey]interface{}{k1: "string value"}},
+		{"multiple pair", []interface{}{k1, "string value", k2, "string value 2"}, 2, map[session.CtxKey]interface{}{k1: "string value", k2: "string value 2"}},
+		{"int value", []interface{}{k1, 1}, 1, map[session.CtxKey]interface{}{k1: 1}},
+		{"float value", []interface{}{k1, 1.0}, 1, map[session.CtxKey]interface{}{k1: 1.0}},
+		{"bool value", []interface{}{k1, true}, 1, map[session.CtxKey]interface{}{k1: true}},
+		{"array value", []interface{}{k1, [1]int{1}}, 1, map[session.CtxKey]interface{}{k1: [1]int{1}}},
+		{"slice value", []interface{}{k1, []int{1, 2}}, 1, map[session.CtxKey]interface{}{k1: []int{1, 2}}},
+		{"struct value", []interface{}{k1, struct{}{}}, 1, map[session.CtxKey]interface{}{k1: struct{}{}}},
+		{"map value", []interface{}{k1, make(map[string]string, 1)}, 1, map[session.CtxKey]interface{}{k1: make(map[string]string, 1)}},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			smock.EXPECT().Save(gomock.Any(), sesDataMatcher{session.Session{Data: tc.expData}}).Return(session.Session{}, nil)
+			retSes := session.Session{Data: tc.expData}
+			smock.EXPECT().Save(gomock.Any(), sesDataMatcher{&retSes}).Return(&retSes, nil)
 
-			_, err := service.CreateAnonymSession(context.Background(), session.DefaultCookieConf(), session.DefaultSessionConf(), tc.kv...)
+			created, err := service.CreateAnonymSession(context.Background(), session.DefaultCookieConf(), session.DefaultSessionConf(), tc.kv...)
 			assert.Nil(t, err)
+			assert.Same(t, &retSes, created)
 		})
 	}
 }
@@ -96,11 +96,12 @@ func (sm sesDataMatcher) Matches(x interface{}) bool {
 		return reflect.DeepEqual(sm.x, x)
 	}
 
-	v1, ok := sm.x.(session.Session)
+	v1, ok := sm.x.(*session.Session)
 	if !ok {
 		return false
 	}
-	v2, ok := x.(session.Session)
+
+	v2, ok := x.(*session.Session)
 	if !ok {
 		return false
 	}
@@ -113,7 +114,7 @@ func (sm sesDataMatcher) Matches(x interface{}) bool {
 }
 
 func (sm sesDataMatcher) String() string {
-	return "is session.Session.Data"
+	return fmt.Sprintf("%v", sm.x)
 }
 
 type sesFullMatcher struct {
@@ -125,16 +126,16 @@ func (sm sesFullMatcher) Matches(x interface{}) bool {
 		return reflect.DeepEqual(sm.x, x)
 	}
 
-	v1, ok := sm.x.(session.Session)
+	v1, ok := sm.x.(*session.Session)
 	if !ok {
 		return false
 	}
-	v2, ok := x.(session.Session)
+	v2, ok := x.(*session.Session)
 	if !ok {
 		return false
 	}
 
-	return session.ValidateSessionId(v2.ID) == nil &&
+	return session.ValidateSessionID(v2.ID) == nil &&
 		reflect.DeepEqual(v1.Active, v2.Active) &&
 		reflect.DeepEqual(v1.Anonym, v2.Anonym) &&
 		reflect.DeepEqual(v1.UID, v2.UID) &&
@@ -146,7 +147,7 @@ func (sm sesFullMatcher) Matches(x interface{}) bool {
 }
 
 func (sm sesFullMatcher) String() string {
-	return "is session.Session"
+	return fmt.Sprintf("%v", sm.x)
 }
 
 func TestSuccessfulCreatingAnonymSession(t *testing.T) {
@@ -162,8 +163,10 @@ func TestSuccessfulCreatingAnonymSession(t *testing.T) {
 		"key",
 	)
 
+	resSes := session.Session{}
+
 	smock.EXPECT().Save(ctx, sesFullMatcher{
-		session.Session{
+		&session.Session{
 			Active:      true,
 			Anonym:      true,
 			UID:         "",
@@ -171,11 +174,12 @@ func TestSuccessfulCreatingAnonymSession(t *testing.T) {
 			IdleTimeout: sconf.IdleTimeout,
 			AbsTimeout:  sconf.AbsTimout,
 		},
-	}).Return(session.Session{}, nil)
+	}).Return(&resSes, nil)
 
-	_, err := service.CreateAnonymSession(ctx, cookieConf, sconf)
+	created, err := service.CreateAnonymSession(ctx, cookieConf, sconf)
 
 	assert.Nil(t, err)
+	assert.Same(t, &resSes, created)
 }
 
 func TestErrorSavingAnonymSession(t *testing.T) {
@@ -194,11 +198,11 @@ func TestErrorSavingAnonymSession(t *testing.T) {
 	retErr := errors.New("some err")
 	expErr := fmt.Errorf("session.CreateAnonymSession() Save error: %w", retErr)
 
-	smock.EXPECT().Save(ctx, gomock.Any()).Return(session.Session{}, retErr)
+	smock.EXPECT().Save(ctx, gomock.Any()).Return(nil, retErr)
 
-	s, err := service.CreateAnonymSession(ctx, cookieConf, sconf)
+	created, err := service.CreateAnonymSession(ctx, cookieConf, sconf)
 
-	assert.Equal(t, session.Session{}, s)
+	assert.Nil(t, created)
 	assert.Equal(t, expErr, err)
 }
 
@@ -218,8 +222,10 @@ func TestSucessfullCreateUserSession(t *testing.T) {
 
 	uid := "1234"
 
+	resSes := session.Session{}
+
 	smock.EXPECT().Save(ctx, sesFullMatcher{
-		session.Session{
+		&session.Session{
 			Active:      true,
 			Anonym:      false,
 			UID:         uid,
@@ -227,11 +233,12 @@ func TestSucessfullCreateUserSession(t *testing.T) {
 			IdleTimeout: sconf.IdleTimeout,
 			AbsTimeout:  sconf.AbsTimout,
 		},
-	}).Return(session.Session{}, nil)
+	}).Return(&resSes, nil)
 
-	_, err := service.CreateUserSession(ctx, uid, cookieConf, sconf)
+	created, err := service.CreateUserSession(ctx, uid, cookieConf, sconf)
 
 	assert.Nil(t, err)
+	assert.Same(t, &resSes, created)
 }
 
 func TestErrorSavingUserSession(t *testing.T) {
@@ -249,12 +256,12 @@ func TestErrorSavingUserSession(t *testing.T) {
 
 	retErr := errors.New("some error")
 	expErr := fmt.Errorf("session.CreateUserSession() Save error: %w", retErr)
-	smock.EXPECT().Save(ctx, gomock.Any()).Return(session.Session{}, retErr)
+	smock.EXPECT().Save(ctx, gomock.Any()).Return(nil, retErr)
 
 	uid := "1234"
 
-	s, err := service.CreateUserSession(ctx, uid, cookieConf, sconf)
-	assert.Equal(t, session.Session{}, s)
+	created, err := service.CreateUserSession(ctx, uid, cookieConf, sconf)
+	assert.Nil(t, created)
 	assert.Equal(t, expErr, err)
 }
 
@@ -274,20 +281,18 @@ func TestLoadSessionErr(t *testing.T) {
 	tt := []struct {
 		name      string
 		returnErr error
-		returnSes session.Session
 		expErr    error
-		expSes    session.Session
 	}{
-		{"session not found", session.ErrSessionNotFound, session.Session{}, session.ErrSessionNotFound, session.Session{}},
-		{"session not found", errors.New("some error"), session.Session{}, fmt.Errorf("session.LoadSession() Load error: %w", errors.New("some error")), session.Session{}},
+		{"session not found", session.ErrSessionNotFound, session.ErrSessionNotFound},
+		{"session not found", errors.New("some error"), fmt.Errorf("session.LoadSession() Load error: %w", errors.New("some error"))},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			smock.EXPECT().Load(ctx, sid).Return(tc.returnSes, tc.returnErr)
+			smock.EXPECT().Load(ctx, sid).Return(nil, tc.returnErr)
 
-			s, err := service.LoadSession(ctx, sid)
-			assert.Equal(t, tc.expSes, s)
+			created, err := service.LoadSession(ctx, sid)
+			assert.Nil(t, created)
 			assert.Equal(t, tc.expErr, err)
 		})
 	}
@@ -309,11 +314,11 @@ func TestLoadSessionSuccess(t *testing.T) {
 	ses, _ := session.NewSession()
 	ses.ID = sid
 
-	smock.EXPECT().Load(ctx, sid).Return(ses, nil)
+	smock.EXPECT().Load(ctx, sid).Return(&ses, nil)
 
-	s, err := service.LoadSession(ctx, sid)
+	loaded, err := service.LoadSession(ctx, sid)
 	assert.Nil(t, err)
-	assert.Equal(t, ses, s)
+	assert.Same(t, &ses, loaded)
 }
 
 func TestInvalidateSession(t *testing.T) {
