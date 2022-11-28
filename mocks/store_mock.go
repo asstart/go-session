@@ -35,6 +35,21 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
+// AddAttributes mocks base method.
+func (m *MockStore) AddAttributes(ctx context.Context, sid string, data map[session.CtxKey]interface{}) (*session.Session, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddAttributes", ctx, sid, data)
+	ret0, _ := ret[0].(*session.Session)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddAttributes indicates an expected call of AddAttributes.
+func (mr *MockStoreMockRecorder) AddAttributes(ctx, sid, data interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAttributes", reflect.TypeOf((*MockStore)(nil).AddAttributes), ctx, sid, data)
+}
+
 // Invalidate mocks base method.
 func (m *MockStore) Invalidate(ctx context.Context, sid string) error {
 	m.ctrl.T.Helper()
@@ -64,6 +79,26 @@ func (mr *MockStoreMockRecorder) Load(ctx, sid interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Load", reflect.TypeOf((*MockStore)(nil).Load), ctx, sid)
 }
 
+// RemoveAttributes mocks base method.
+func (m *MockStore) RemoveAttributes(ctx context.Context, sid string, keys ...session.CtxKey) (*session.Session, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, sid}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RemoveAttributes", varargs...)
+	ret0, _ := ret[0].(*session.Session)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveAttributes indicates an expected call of RemoveAttributes.
+func (mr *MockStoreMockRecorder) RemoveAttributes(ctx, sid interface{}, keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, sid}, keys...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAttributes", reflect.TypeOf((*MockStore)(nil).RemoveAttributes), varargs...)
+}
+
 // Save mocks base method.
 func (m *MockStore) Save(ctx context.Context, s *session.Session) (*session.Session, error) {
 	m.ctrl.T.Helper()
@@ -77,19 +112,4 @@ func (m *MockStore) Save(ctx context.Context, s *session.Session) (*session.Sess
 func (mr *MockStoreMockRecorder) Save(ctx, s interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockStore)(nil).Save), ctx, s)
-}
-
-// Update mocks base method.
-func (m *MockStore) Update(ctx context.Context, s *session.Session) (*session.Session, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, s)
-	ret0, _ := ret[0].(*session.Session)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Update indicates an expected call of Update.
-func (mr *MockStoreMockRecorder) Update(ctx, s interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockStore)(nil).Update), ctx, s)
 }

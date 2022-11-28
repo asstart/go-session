@@ -35,6 +35,26 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// AddAttributes mocks base method.
+func (m *MockService) AddAttributes(ctx context.Context, sid string, keyAndValues ...interface{}) (*session.Session, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, sid}
+	for _, a := range keyAndValues {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AddAttributes", varargs...)
+	ret0, _ := ret[0].(*session.Session)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddAttributes indicates an expected call of AddAttributes.
+func (mr *MockServiceMockRecorder) AddAttributes(ctx, sid interface{}, keyAndValues ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, sid}, keyAndValues...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAttributes", reflect.TypeOf((*MockService)(nil).AddAttributes), varargs...)
+}
+
 // CreateAnonymSession mocks base method.
 func (m *MockService) CreateAnonymSession(ctx context.Context, cc session.CookieConf, sc session.Conf, keyAndValues ...interface{}) (*session.Session, error) {
 	m.ctrl.T.Helper()
@@ -102,4 +122,24 @@ func (m *MockService) LoadSession(ctx context.Context, sid string) (*session.Ses
 func (mr *MockServiceMockRecorder) LoadSession(ctx, sid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSession", reflect.TypeOf((*MockService)(nil).LoadSession), ctx, sid)
+}
+
+// RemoveAttributes mocks base method.
+func (m *MockService) RemoveAttributes(ctx context.Context, sid string, keys ...session.CtxKey) (*session.Session, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, sid}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RemoveAttributes", varargs...)
+	ret0, _ := ret[0].(*session.Session)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveAttributes indicates an expected call of RemoveAttributes.
+func (mr *MockServiceMockRecorder) RemoveAttributes(ctx, sid interface{}, keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, sid}, keys...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAttributes", reflect.TypeOf((*MockService)(nil).RemoveAttributes), varargs...)
 }
