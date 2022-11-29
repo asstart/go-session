@@ -328,7 +328,7 @@ func (ms *mongoStore) RemoveAttributes(ctx context.Context, sid string, keys ...
 	ms.Logger.V(0).Info("session.mongo.RemoveAttributes() started", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 	defer ms.Logger.V(0).Info("session.mongo.RemoveAttributes() finished", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 
-	var fullkeys []string
+	fullkeys := []string{}
 	for _, k := range keys {
 		fullkeys = append(fullkeys, fmt.Sprintf("data.%v", k))
 	}
