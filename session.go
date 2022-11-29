@@ -127,6 +127,12 @@ func (s *Session) WithSessionConf(sc Conf) {
 	s.AbsTimeout = sc.AbsTimout
 }
 
+func (s *Session) WithAttributes(attrs map[CtxKey]interface{}) {
+	for k, v := range attrs {
+		s.AddAttribute(k, v)
+	}
+}
+
 // AddAttribute add a new attribute to the session
 func (s *Session) AddAttribute(k CtxKey, v interface{}) {
 	s.Data[k] = v

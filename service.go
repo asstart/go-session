@@ -21,6 +21,8 @@ type Service interface {
 	CreateUserSession(ctx context.Context, uid string, cc CookieConf, sc Conf, keyAndValues ...interface{}) (*Session, error)
 	LoadSession(ctx context.Context, sid string) (*Session, error)
 	InvalidateSession(ctx context.Context, sid string) error
+	AddAttributes(ctx context.Context, sid string, keyAndValues ...interface{}) (*Session, error)
+	RemoveAttributes(ctx context.Context, sid string, keys ...CtxKey) (*Session, error)
 }
 
 type sessionService struct {
@@ -60,12 +62,14 @@ func (ss *sessionService) CreateAnonymSession(ctx context.Context, cc CookieConf
 		"session.CreateAnonymSession() finished",
 		LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
 
-	if len(keyAndValues)%2 != 0 {
-		err := fmt.Errorf("session.CreateAnonymSession() expected even count of key and values, got: %v", len(keyAndValues))
+	data, err := parseAttrs(keyAndValues...)
+	if err != nil {
+		err = fmt.Errorf("session.CreateAnonymSession() error: %v", err)
 		ss.Logger.V(0).Info(
 			"session.CreateAnonymSession() error",
 			LogKeyRQID, ctx.Value(ss.CtxReqIDKey),
-			LogKeyDebugError, err)
+			LogKeyDebugError, err,
+		)
 		return nil, err
 	}
 
@@ -78,21 +82,10 @@ func (ss *sessionService) CreateAnonymSession(ctx context.Context, cc CookieConf
 			LogKeyDebugError, err)
 		return nil, err
 	}
+
 	s.WithCookieConf(cc)
 	s.WithSessionConf(sc)
-
-	for i := 0; i < len(keyAndValues); i += 2 {
-		k, ok := keyAndValues[i].(CtxKey)
-		if !ok {
-			err = fmt.Errorf("session.CreateAnonymSession() error: can't convert key of type: %T to session.SessionKey", keyAndValues[i])
-			ss.Logger.V(0).Info(
-				"session.CreateAnonymSession() error",
-				LogKeyRQID, ctx.Value(ss.CtxReqIDKey),
-				LogKeyDebugError, err)
-			return nil, err
-		}
-		s.AddAttribute(k, keyAndValues[i+1])
-	}
+	s.WithAttributes(data)
 
 	svdS, err := ss.SStore.Save(ctx, &s)
 	if err != nil {
@@ -113,6 +106,17 @@ func (ss *sessionService) CreateUserSession(ctx context.Context, uid string, cc 
 	ss.Logger.V(0).Info("session.CreateUserSession() started", LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
 	defer ss.Logger.V(0).Info("session.CreateUserSession() finished", LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
 
+	data, err := parseAttrs(keyAndValues...)
+	if err != nil {
+		err = fmt.Errorf("session.CreateUserSession() error: %w", err)
+		ss.Logger.V(0).Info(
+			"session.CreateUserSession() error",
+			LogKeyRQID, ctx.Value(ss.CtxReqIDKey),
+			LogKeyDebugError, err,
+		)
+		return nil, err
+	}
+
 	s, err := NewSession()
 	if err != nil {
 		err = fmt.Errorf("session.CreateUserSession() error creating user session: %w", err)
@@ -122,11 +126,11 @@ func (ss *sessionService) CreateUserSession(ctx context.Context, uid string, cc 
 			LogKeyDebugError, err)
 		return nil, err
 	}
+
 	s.WithCookieConf(cc)
 	s.WithUserID(uid)
 	s.WithSessionConf(sc)
-
-	s.UID = uid
+	s.WithAttributes(data)
 
 	svdS, err := ss.SStore.Save(ctx, &s)
 	if err != nil {
@@ -179,4 +183,98 @@ func (ss *sessionService) InvalidateSession(ctx context.Context, sid string) err
 		return err
 	}
 	return nil
+}
+
+func (ss *sessionService) AddAttributes(ctx context.Context, sid string, keyAndValues ...interface{}) (*Session, error) {
+	ss.Logger.V(0).Info("session.AddAttributes() started", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
+	defer ss.Logger.V(0).Info("session.AddAttributes() finished", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
+
+	if len(keyAndValues) == 0 {
+		err := fmt.Errorf("session.AddAttributes() no attributes to add")
+		ss.Logger.V(0).Info(
+			"session.AddAttributes() error",
+			LogKeyRQID, ctx.Value(ss.CtxReqIDKey),
+			LogKeyDebugError, err,
+			LogKeySID, sid,
+		)
+		return nil, err
+	}
+
+	data, err := parseAttrs(keyAndValues...)
+	if err != nil {
+		err = fmt.Errorf("session.AddAttributes() error: %v", err)
+		ss.Logger.V(0).Info(
+			"session.AddAttributes() error",
+			LogKeyRQID, ctx.Value(ss.CtxReqIDKey),
+			LogKeySID, sid,
+			LogKeyDebugError, err,
+		)
+		return nil, err
+	}
+
+	s, err := ss.SStore.AddAttributes(ctx, sid, data)
+
+	if err == ErrSessionNotFound {
+		return nil, ErrSessionNotFound
+	}
+
+	if err != nil {
+		err = fmt.Errorf("session.AddAttributes() AddAttributes unexpected error: %w", err)
+		ss.Logger.V(0).Info("session.AddAttributes() AddAttributes unexpected error",
+			LogKeySID, sid,
+			LogKeyRQID, ctx.Value(ss.CtxReqIDKey),
+			LogKeyDebugError, err)
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func (ss *sessionService) RemoveAttributes(ctx context.Context, sid string, keys ...CtxKey) (*Session, error) {
+	ss.Logger.V(0).Info("session.RemoveAttributes() started", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
+	defer ss.Logger.V(0).Info("session.RemoveAttributes() finished", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
+
+	if len(keys) == 0 {
+		err := fmt.Errorf("session.RemoveAttributes() no attributes to remove")
+		ss.Logger.V(0).Info(
+			"session.RemoveAttributes() no attributes to remove",
+			LogKeyRQID, ctx.Value(ss.CtxReqIDKey),
+			LogKeyDebugError, err,
+			LogKeySID, sid,
+		)
+		return nil, err
+	}
+
+	s, err := ss.SStore.RemoveAttributes(ctx, sid, keys...)
+	if err == ErrSessionNotFound {
+		return nil, ErrSessionNotFound
+	}
+
+	if err != nil {
+		err = fmt.Errorf("session.RemoveAttributes() RemoveAttributes unexpected error: %w", err)
+		ss.Logger.V(0).Info("session.RemoveAttributes() RemoveAttributes unexpected error",
+			LogKeySID, sid,
+			LogKeyRQID, ctx.Value(ss.CtxReqIDKey),
+			LogKeyDebugError, err)
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func parseAttrs(keyAndValues ...interface{}) (map[CtxKey]interface{}, error) {
+	if len(keyAndValues)%2 != 0 {
+		return nil, fmt.Errorf("expected even count of key and values, got: %v", len(keyAndValues))
+	}
+
+	data := map[CtxKey]interface{}{}
+
+	for i := 0; i < len(keyAndValues); i += 2 {
+		k, ok := keyAndValues[i].(CtxKey)
+		if !ok {
+			return nil, fmt.Errorf("can't convert key of type: %T to session.SessionKey", keyAndValues[i])
+		}
+		data[k] = keyAndValues[i+1]
+	}
+	return data, nil
 }

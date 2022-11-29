@@ -279,3 +279,90 @@ func (ms *mongoStore) Load(ctx context.Context, sid string) (*session.Session, e
 
 	return &r, nil
 }
+
+func (ms *mongoStore) AddAttributes(ctx context.Context, sid string, data map[session.CtxKey]interface{}) (*session.Session, error) {
+	ms.Logger.V(0).Info("session.mongo.AddAttributes() started", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+	defer ms.Logger.V(0).Info("session.mongo.AddAttributes() finished", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+
+	f := bson.M{"sid": sid}
+	up := bson.A{
+		bson.D{{"$set", bson.D{
+			{"data", bson.D{
+				{"$mergeObjects", bson.A{
+					"$data", data,
+				}},
+			}},
+		}}},
+		bson.D{{"$addFields",
+			bson.D{
+				{"last_accessed_at", "$$NOW"},
+			},
+		}},
+	}
+	opt := options.FindOneAndUpdate()
+	opt.SetReturnDocument(options.After)
+
+	var s mngSession
+	err := ms.Collecction.FindOneAndUpdate(ctx, f, up, opt).Decode(&s)
+
+	if err == mongo.ErrNoDocuments {
+		ms.Logger.V(0).Info("session.mongo.AddAttributes() FindOneAndUpdate() session not found", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+		return nil, session.ErrSessionNotFound
+	}
+
+	if err != nil {
+		err = fmt.Errorf("session.mongo.AddAttributes() FindOneAndUpdate() unexpected error: %w", err)
+		ms.Logger.V(0).Info("session.mongo.AddAttributes() FindOneAndUpdate() unexpected error",
+			session.LogKeySID, sid,
+			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
+			session.LogKeyDebugError, err,
+		)
+		return nil, err
+	}
+
+	r := fromMngSession(&s)
+	return &r, nil
+}
+
+func (ms *mongoStore) RemoveAttributes(ctx context.Context, sid string, keys ...session.CtxKey) (*session.Session, error) {
+	ms.Logger.V(0).Info("session.mongo.RemoveAttributes() started", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+	defer ms.Logger.V(0).Info("session.mongo.RemoveAttributes() finished", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+
+	fullkeys := []string{}
+	for _, k := range keys {
+		fullkeys = append(fullkeys, fmt.Sprintf("data.%v", k))
+	}
+
+	f := bson.M{"sid": sid}
+	up := bson.A{
+		bson.D{{"$unset", fullkeys}},
+		bson.D{{"$addFields",
+			bson.D{
+				{"last_accessed_at", "$$NOW"},
+			},
+		}},
+	}
+	opt := options.FindOneAndUpdate()
+	opt.SetReturnDocument(options.After)
+
+	var s mngSession
+	err := ms.Collecction.FindOneAndUpdate(ctx, f, up, opt).Decode(&s)
+
+	if err == mongo.ErrNoDocuments {
+		ms.Logger.V(0).Info("session.mongo.AddAttributes() FindOneAndUpdate() session not found", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+		return nil, session.ErrSessionNotFound
+	}
+
+	if err != nil {
+		err = fmt.Errorf("session.mongo.AddAttributes() FindOneAndUpdate() unexpected error: %w", err)
+		ms.Logger.V(0).Info("session.mongo.AddAttributes() FindOneAndUpdate() unexpected error",
+			session.LogKeySID, sid,
+			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
+			session.LogKeyDebugError, err,
+		)
+		return nil, err
+	}
+
+	r := fromMngSession(&s)
+	return &r, nil
+}
