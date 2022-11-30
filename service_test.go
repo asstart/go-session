@@ -53,8 +53,8 @@ func TestCreateAnonSessionValidAttributes(t *testing.T) {
 		"key",
 	)
 
-	var k1 string = "key1"
-	var k2 string = "key2"
+	var k1 = "key1"
+	var k2 = "key2"
 
 	tt := []struct {
 		name         string
@@ -127,8 +127,8 @@ func TestCreateUserSessionValidAttributes(t *testing.T) {
 	)
 
 	uid := "2222"
-	var k1 string = "key1"
-	var k2 string = "key2"
+	var k1 = "key1"
+	var k2 = "key2"
 
 	tt := []struct {
 		name         string
@@ -434,8 +434,8 @@ func TestAddAttributesValidCases(t *testing.T) {
 		"key",
 	)
 
-	var k1 string = "key1"
-	var k2 string = "key2"
+	var k1 = "key1"
+	var k2 = "key2"
 	sid := "1111"
 
 	tt := []struct {
@@ -506,7 +506,7 @@ func TestAddAttributesSessionNotFound(t *testing.T) {
 
 	sid := "1111"
 
-	var k string = "attr1"
+	var k = "attr1"
 	v := "value"
 	expData := map[string]interface{}{
 		k: v,
@@ -524,7 +524,7 @@ func TestAddAttributesUnexpectedErr(t *testing.T) {
 
 	sid := "1111"
 
-	var k string = "attr1"
+	var k = "attr1"
 	v := "value"
 	expData := map[string]interface{}{
 		k: v,
@@ -557,7 +557,7 @@ func TestRemoveAttributesSessionNotFound(t *testing.T) {
 
 	sid := "1111"
 
-	var k string = "attr1"
+	var k = "attr1"
 	smock.EXPECT().RemoveAttributes(gomock.Any(), gomock.Eq(sid), gomock.Eq(k)).Return(nil, session.ErrSessionNotFound)
 	s, err := service.RemoveAttributes(context.Background(), sid, k)
 	assert.Nil(t, s)
@@ -571,7 +571,7 @@ func TestRemoveAttributesUnexpectedErr(t *testing.T) {
 
 	sid := "1111"
 
-	var k string = "attr1"
+	var k = "attr1"
 
 	retErr := errors.New("unexpected error")
 	smock.
