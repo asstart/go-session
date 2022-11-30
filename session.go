@@ -22,7 +22,7 @@ import (
 // Anonym is supposed to use during authentication process.
 type Session struct {
 	ID   string
-	Data map[CtxKey]interface{}
+	Data map[string]interface{}
 	Opts CookieConf
 
 	Anonym bool
@@ -100,7 +100,7 @@ func NewSession() (Session, error) {
 	}
 	s := Session{
 		ID:          id,
-		Data:        make(map[CtxKey]interface{}),
+		Data:        make(map[string]interface{}),
 		Opts:        DefaultCookieConf(),
 		Anonym:      true,
 		Active:      true,
@@ -127,20 +127,20 @@ func (s *Session) WithSessionConf(sc Conf) {
 	s.AbsTimeout = sc.AbsTimout
 }
 
-func (s *Session) WithAttributes(attrs map[CtxKey]interface{}) {
+func (s *Session) WithAttributes(attrs map[string]interface{}) {
 	for k, v := range attrs {
 		s.AddAttribute(k, v)
 	}
 }
 
 // AddAttribute add a new attribute to the session
-func (s *Session) AddAttribute(k CtxKey, v interface{}) {
+func (s *Session) AddAttribute(k string, v interface{}) {
 	s.Data[k] = v
 }
 
 // GetAttribute return a value from the session
 // It return nill and false if attribute doesn't exists
-func (s *Session) GetAttribute(k CtxKey) (interface{}, bool) {
+func (s *Session) GetAttribute(k string) (interface{}, bool) {
 	v, ok := s.Data[k]
 	return v, ok
 }

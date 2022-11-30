@@ -36,7 +36,7 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // AddAttributes mocks base method.
-func (m *MockStore) AddAttributes(ctx context.Context, sid string, data map[session.CtxKey]interface{}) (*session.Session, error) {
+func (m *MockStore) AddAttributes(ctx context.Context, sid string, data map[string]interface{}) (*session.Session, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddAttributes", ctx, sid, data)
 	ret0, _ := ret[0].(*session.Session)
@@ -80,7 +80,7 @@ func (mr *MockStoreMockRecorder) Load(ctx, sid interface{}) *gomock.Call {
 }
 
 // RemoveAttributes mocks base method.
-func (m *MockStore) RemoveAttributes(ctx context.Context, sid string, keys ...session.CtxKey) (*session.Session, error) {
+func (m *MockStore) RemoveAttributes(ctx context.Context, sid string, keys ...string) (*session.Session, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, sid}
 	for _, a := range keys {

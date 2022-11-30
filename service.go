@@ -22,7 +22,7 @@ type Service interface {
 	LoadSession(ctx context.Context, sid string) (*Session, error)
 	InvalidateSession(ctx context.Context, sid string) error
 	AddAttributes(ctx context.Context, sid string, keyAndValues ...interface{}) (*Session, error)
-	RemoveAttributes(ctx context.Context, sid string, keys ...CtxKey) (*Session, error)
+	RemoveAttributes(ctx context.Context, sid string, keys ...string) (*Session, error)
 }
 
 type sessionService struct {
@@ -230,7 +230,7 @@ func (ss *sessionService) AddAttributes(ctx context.Context, sid string, keyAndV
 	return s, nil
 }
 
-func (ss *sessionService) RemoveAttributes(ctx context.Context, sid string, keys ...CtxKey) (*Session, error) {
+func (ss *sessionService) RemoveAttributes(ctx context.Context, sid string, keys ...string) (*Session, error) {
 	ss.Logger.V(0).Info("session.RemoveAttributes() started", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
 	defer ss.Logger.V(0).Info("session.RemoveAttributes() finished", LogKeySID, sid, LogKeyRQID, ctx.Value(ss.CtxReqIDKey))
 
@@ -262,17 +262,17 @@ func (ss *sessionService) RemoveAttributes(ctx context.Context, sid string, keys
 	return s, nil
 }
 
-func parseAttrs(keyAndValues ...interface{}) (map[CtxKey]interface{}, error) {
+func parseAttrs(keyAndValues ...interface{}) (map[string]interface{}, error) {
 	if len(keyAndValues)%2 != 0 {
 		return nil, fmt.Errorf("expected even count of key and values, got: %v", len(keyAndValues))
 	}
 
-	data := map[CtxKey]interface{}{}
+	data := map[string]interface{}{}
 
 	for i := 0; i < len(keyAndValues); i += 2 {
-		k, ok := keyAndValues[i].(CtxKey)
+		k, ok := keyAndValues[i].(string)
 		if !ok {
-			return nil, fmt.Errorf("can't convert key of type: %T to session.SessionKey", keyAndValues[i])
+			return nil, fmt.Errorf("can't convert key of type: %T to string", keyAndValues[i])
 		}
 		data[k] = keyAndValues[i+1]
 	}
