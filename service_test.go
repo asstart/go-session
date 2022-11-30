@@ -31,8 +31,7 @@ func TestCreateAnonSessionBadAttribbutes(t *testing.T) {
 	}{
 		{"odd number of key value paiers, single key", []interface{}{"key"}, "session.CreateAnonymSession() error: expected even count of key and values, got: 1"},
 		{"odd number of key value paiers, multiple keys", []interface{}{"key1", "value1", "key2"}, "session.CreateAnonymSession() error: expected even count of key and values, got: 3"},
-		{"invalid string key", []interface{}{"1", "value"}, "session.CreateAnonymSession() error: can't convert key of type: string to session.SessionKey"},
-		{"invalid int key", []interface{}{1, "value"}, "session.CreateAnonymSession() error: can't convert key of type: int to session.SessionKey"},
+		{"invalid int key", []interface{}{1, "value"}, "session.CreateAnonymSession() error: can't convert key of type: int to string"},
 	}
 
 	for _, tc := range tt {
@@ -54,25 +53,25 @@ func TestCreateAnonSessionValidAttributes(t *testing.T) {
 		"key",
 	)
 
-	var k1 session.CtxKey = "key1"
-	var k2 session.CtxKey = "key2"
+	var k1 string = "key1"
+	var k2 string = "key2"
 
 	tt := []struct {
 		name         string
 		kv           []interface{}
 		expAttrCount int
-		expData      map[session.CtxKey]interface{}
+		expData      map[string]interface{}
 	}{
-		{"empty key value pairs", []interface{}{}, 0, make(map[session.CtxKey]interface{})},
-		{"single pair", []interface{}{k1, "string value"}, 1, map[session.CtxKey]interface{}{k1: "string value"}},
-		{"multiple pair", []interface{}{k1, "string value", k2, "string value 2"}, 2, map[session.CtxKey]interface{}{k1: "string value", k2: "string value 2"}},
-		{"int value", []interface{}{k1, 1}, 1, map[session.CtxKey]interface{}{k1: 1}},
-		{"float value", []interface{}{k1, 1.0}, 1, map[session.CtxKey]interface{}{k1: 1.0}},
-		{"bool value", []interface{}{k1, true}, 1, map[session.CtxKey]interface{}{k1: true}},
-		{"array value", []interface{}{k1, [1]int{1}}, 1, map[session.CtxKey]interface{}{k1: [1]int{1}}},
-		{"slice value", []interface{}{k1, []int{1, 2}}, 1, map[session.CtxKey]interface{}{k1: []int{1, 2}}},
-		{"struct value", []interface{}{k1, struct{}{}}, 1, map[session.CtxKey]interface{}{k1: struct{}{}}},
-		{"map value", []interface{}{k1, make(map[string]string, 1)}, 1, map[session.CtxKey]interface{}{k1: make(map[string]string, 1)}},
+		{"empty key value pairs", []interface{}{}, 0, make(map[string]interface{})},
+		{"single pair", []interface{}{k1, "string value"}, 1, map[string]interface{}{k1: "string value"}},
+		{"multiple pair", []interface{}{k1, "string value", k2, "string value 2"}, 2, map[string]interface{}{k1: "string value", k2: "string value 2"}},
+		{"int value", []interface{}{k1, 1}, 1, map[string]interface{}{k1: 1}},
+		{"float value", []interface{}{k1, 1.0}, 1, map[string]interface{}{k1: 1.0}},
+		{"bool value", []interface{}{k1, true}, 1, map[string]interface{}{k1: true}},
+		{"array value", []interface{}{k1, [1]int{1}}, 1, map[string]interface{}{k1: [1]int{1}}},
+		{"slice value", []interface{}{k1, []int{1, 2}}, 1, map[string]interface{}{k1: []int{1, 2}}},
+		{"struct value", []interface{}{k1, struct{}{}}, 1, map[string]interface{}{k1: struct{}{}}},
+		{"map value", []interface{}{k1, make(map[string]string, 1)}, 1, map[string]interface{}{k1: make(map[string]string, 1)}},
 	}
 
 	for _, tc := range tt {
@@ -105,8 +104,7 @@ func TestCreateUserSessionBadAttribbutes(t *testing.T) {
 	}{
 		{"odd number of key value paiers, single key", []interface{}{"key"}, "session.CreateUserSession() error: expected even count of key and values, got: 1"},
 		{"odd number of key value paiers, multiple keys", []interface{}{"key1", "value1", "key2"}, "session.CreateUserSession() error: expected even count of key and values, got: 3"},
-		{"invalid string key", []interface{}{"1", "value"}, "session.CreateUserSession() error: can't convert key of type: string to session.SessionKey"},
-		{"invalid int key", []interface{}{1, "value"}, "session.CreateUserSession() error: can't convert key of type: int to session.SessionKey"},
+		{"invalid int key", []interface{}{1, "value"}, "session.CreateUserSession() error: can't convert key of type: int to string"},
 	}
 
 	for _, tc := range tt {
@@ -129,25 +127,25 @@ func TestCreateUserSessionValidAttributes(t *testing.T) {
 	)
 
 	uid := "2222"
-	var k1 session.CtxKey = "key1"
-	var k2 session.CtxKey = "key2"
+	var k1 string = "key1"
+	var k2 string = "key2"
 
 	tt := []struct {
 		name         string
 		kv           []interface{}
 		expAttrCount int
-		expData      map[session.CtxKey]interface{}
+		expData      map[string]interface{}
 	}{
-		{"empty key value pairs", []interface{}{}, 0, make(map[session.CtxKey]interface{})},
-		{"single pair", []interface{}{k1, "string value"}, 1, map[session.CtxKey]interface{}{k1: "string value"}},
-		{"multiple pair", []interface{}{k1, "string value", k2, "string value 2"}, 2, map[session.CtxKey]interface{}{k1: "string value", k2: "string value 2"}},
-		{"int value", []interface{}{k1, 1}, 1, map[session.CtxKey]interface{}{k1: 1}},
-		{"float value", []interface{}{k1, 1.0}, 1, map[session.CtxKey]interface{}{k1: 1.0}},
-		{"bool value", []interface{}{k1, true}, 1, map[session.CtxKey]interface{}{k1: true}},
-		{"array value", []interface{}{k1, [1]int{1}}, 1, map[session.CtxKey]interface{}{k1: [1]int{1}}},
-		{"slice value", []interface{}{k1, []int{1, 2}}, 1, map[session.CtxKey]interface{}{k1: []int{1, 2}}},
-		{"struct value", []interface{}{k1, struct{}{}}, 1, map[session.CtxKey]interface{}{k1: struct{}{}}},
-		{"map value", []interface{}{k1, make(map[string]string, 1)}, 1, map[session.CtxKey]interface{}{k1: make(map[string]string, 1)}},
+		{"empty key value pairs", []interface{}{}, 0, make(map[string]interface{})},
+		{"single pair", []interface{}{k1, "string value"}, 1, map[string]interface{}{k1: "string value"}},
+		{"multiple pair", []interface{}{k1, "string value", k2, "string value 2"}, 2, map[string]interface{}{k1: "string value", k2: "string value 2"}},
+		{"int value", []interface{}{k1, 1}, 1, map[string]interface{}{k1: 1}},
+		{"float value", []interface{}{k1, 1.0}, 1, map[string]interface{}{k1: 1.0}},
+		{"bool value", []interface{}{k1, true}, 1, map[string]interface{}{k1: true}},
+		{"array value", []interface{}{k1, [1]int{1}}, 1, map[string]interface{}{k1: [1]int{1}}},
+		{"slice value", []interface{}{k1, []int{1, 2}}, 1, map[string]interface{}{k1: []int{1, 2}}},
+		{"struct value", []interface{}{k1, struct{}{}}, 1, map[string]interface{}{k1: struct{}{}}},
+		{"map value", []interface{}{k1, make(map[string]string, 1)}, 1, map[string]interface{}{k1: make(map[string]string, 1)}},
 	}
 
 	for _, tc := range tt {
@@ -436,25 +434,25 @@ func TestAddAttributesValidCases(t *testing.T) {
 		"key",
 	)
 
-	var k1 session.CtxKey = "key1"
-	var k2 session.CtxKey = "key2"
+	var k1 string = "key1"
+	var k2 string = "key2"
 	sid := "1111"
 
 	tt := []struct {
 		name         string
 		kv           []interface{}
 		expAttrCount int
-		expData      map[session.CtxKey]interface{}
+		expData      map[string]interface{}
 	}{
-		{"single pair", []interface{}{k1, "string value"}, 1, map[session.CtxKey]interface{}{k1: "string value"}},
-		{"multiple pair", []interface{}{k1, "string value", k2, "string value 2"}, 2, map[session.CtxKey]interface{}{k1: "string value", k2: "string value 2"}},
-		{"int value", []interface{}{k1, 1}, 1, map[session.CtxKey]interface{}{k1: 1}},
-		{"float value", []interface{}{k1, 1.0}, 1, map[session.CtxKey]interface{}{k1: 1.0}},
-		{"bool value", []interface{}{k1, true}, 1, map[session.CtxKey]interface{}{k1: true}},
-		{"array value", []interface{}{k1, [1]int{1}}, 1, map[session.CtxKey]interface{}{k1: [1]int{1}}},
-		{"slice value", []interface{}{k1, []int{1, 2}}, 1, map[session.CtxKey]interface{}{k1: []int{1, 2}}},
-		{"struct value", []interface{}{k1, struct{}{}}, 1, map[session.CtxKey]interface{}{k1: struct{}{}}},
-		{"map value", []interface{}{k1, make(map[string]string, 1)}, 1, map[session.CtxKey]interface{}{k1: make(map[string]string, 1)}},
+		{"single pair", []interface{}{k1, "string value"}, 1, map[string]interface{}{k1: "string value"}},
+		{"multiple pair", []interface{}{k1, "string value", k2, "string value 2"}, 2, map[string]interface{}{k1: "string value", k2: "string value 2"}},
+		{"int value", []interface{}{k1, 1}, 1, map[string]interface{}{k1: 1}},
+		{"float value", []interface{}{k1, 1.0}, 1, map[string]interface{}{k1: 1.0}},
+		{"bool value", []interface{}{k1, true}, 1, map[string]interface{}{k1: true}},
+		{"array value", []interface{}{k1, [1]int{1}}, 1, map[string]interface{}{k1: [1]int{1}}},
+		{"slice value", []interface{}{k1, []int{1, 2}}, 1, map[string]interface{}{k1: []int{1, 2}}},
+		{"struct value", []interface{}{k1, struct{}{}}, 1, map[string]interface{}{k1: struct{}{}}},
+		{"map value", []interface{}{k1, make(map[string]string, 1)}, 1, map[string]interface{}{k1: make(map[string]string, 1)}},
 	}
 
 	for _, tc := range tt {
@@ -488,8 +486,7 @@ func TestAddAttributesInvalidCases(t *testing.T) {
 		{"empty key value pairs", []interface{}{}, "session.AddAttributes() no attributes to add"},
 		{"odd number of key value paiers, single key", []interface{}{"key"}, "session.AddAttributes() error: expected even count of key and values, got: 1"},
 		{"odd number of key value paiers, multiple keys", []interface{}{"key1", "value1", "key2"}, "session.AddAttributes() error: expected even count of key and values, got: 3"},
-		{"invalid string key", []interface{}{"1", "value"}, "session.AddAttributes() error: can't convert key of type: string to session.SessionKey"},
-		{"invalid int key", []interface{}{1, "value"}, "session.AddAttributes() error: can't convert key of type: int to session.SessionKey"},
+		{"invalid int key", []interface{}{1, "value"}, "session.AddAttributes() error: can't convert key of type: int to string"},
 	}
 
 	for _, tc := range tt {
@@ -509,9 +506,9 @@ func TestAddAttributesSessionNotFound(t *testing.T) {
 
 	sid := "1111"
 
-	var k session.CtxKey = "attr1"
+	var k string = "attr1"
 	v := "value"
-	expData := map[session.CtxKey]interface{}{
+	expData := map[string]interface{}{
 		k: v,
 	}
 	smock.EXPECT().AddAttributes(gomock.Any(), gomock.Eq(sid), gomock.Eq(expData)).Return(nil, session.ErrSessionNotFound)
@@ -527,9 +524,9 @@ func TestAddAttributesUnexpectedErr(t *testing.T) {
 
 	sid := "1111"
 
-	var k session.CtxKey = "attr1"
+	var k string = "attr1"
 	v := "value"
-	expData := map[session.CtxKey]interface{}{
+	expData := map[string]interface{}{
 		k: v,
 	}
 	retErr := errors.New("unexpected error")
@@ -560,7 +557,7 @@ func TestRemoveAttributesSessionNotFound(t *testing.T) {
 
 	sid := "1111"
 
-	var k session.CtxKey = "attr1"
+	var k string = "attr1"
 	smock.EXPECT().RemoveAttributes(gomock.Any(), gomock.Eq(sid), gomock.Eq(k)).Return(nil, session.ErrSessionNotFound)
 	s, err := service.RemoveAttributes(context.Background(), sid, k)
 	assert.Nil(t, s)
@@ -574,7 +571,7 @@ func TestRemoveAttributesUnexpectedErr(t *testing.T) {
 
 	sid := "1111"
 
-	var k session.CtxKey = "attr1"
+	var k string = "attr1"
 
 	retErr := errors.New("unexpected error")
 	smock.

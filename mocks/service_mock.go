@@ -125,7 +125,7 @@ func (mr *MockServiceMockRecorder) LoadSession(ctx, sid interface{}) *gomock.Cal
 }
 
 // RemoveAttributes mocks base method.
-func (m *MockService) RemoveAttributes(ctx context.Context, sid string, keys ...session.CtxKey) (*session.Session, error) {
+func (m *MockService) RemoveAttributes(ctx context.Context, sid string, keys ...string) (*session.Session, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, sid}
 	for _, a := range keys {

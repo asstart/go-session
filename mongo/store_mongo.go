@@ -29,17 +29,17 @@ func NewMongoStore(c *mongo.Collection, l logr.Logger, reqIDKey interface{}) ses
 }
 
 type mngSession struct {
-	ID             primitive.ObjectID             `bson:"_id"`
-	SID            string                         `bson:"sid"`
-	Data           map[session.CtxKey]interface{} `bson:"data,omitempty"`
-	Opts           mngCookieConf                  `bson:"opts"`
-	Anonym         bool                           `bson:"anonym"`
-	Active         bool                           `bson:"active"`
-	UID            string                         `bson:"uid"`
-	IdleTimeout    time.Duration                  `bson:"idle_timeout"`
-	AbsTimeout     time.Duration                  `bson:"abs_timeout"`
-	LastAccessedAt time.Time                      `bson:"last_accessed_at"`
-	CreatedAt      time.Time                      `bson:"created_at"`
+	ID             primitive.ObjectID     `bson:"_id"`
+	SID            string                 `bson:"sid"`
+	Data           map[string]interface{} `bson:"data,omitempty"`
+	Opts           mngCookieConf          `bson:"opts"`
+	Anonym         bool                   `bson:"anonym"`
+	Active         bool                   `bson:"active"`
+	UID            string                 `bson:"uid"`
+	IdleTimeout    time.Duration          `bson:"idle_timeout"`
+	AbsTimeout     time.Duration          `bson:"abs_timeout"`
+	LastAccessedAt time.Time              `bson:"last_accessed_at"`
+	CreatedAt      time.Time              `bson:"created_at"`
 }
 
 type mngCookieConf struct {
@@ -280,7 +280,7 @@ func (ms *mongoStore) Load(ctx context.Context, sid string) (*session.Session, e
 	return &r, nil
 }
 
-func (ms *mongoStore) AddAttributes(ctx context.Context, sid string, data map[session.CtxKey]interface{}) (*session.Session, error) {
+func (ms *mongoStore) AddAttributes(ctx context.Context, sid string, data map[string]interface{}) (*session.Session, error) {
 	ms.Logger.V(0).Info("session.mongo.AddAttributes() started", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 	defer ms.Logger.V(0).Info("session.mongo.AddAttributes() finished", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 
@@ -324,7 +324,7 @@ func (ms *mongoStore) AddAttributes(ctx context.Context, sid string, data map[se
 	return &r, nil
 }
 
-func (ms *mongoStore) RemoveAttributes(ctx context.Context, sid string, keys ...session.CtxKey) (*session.Session, error) {
+func (ms *mongoStore) RemoveAttributes(ctx context.Context, sid string, keys ...string) (*session.Session, error) {
 	ms.Logger.V(0).Info("session.mongo.RemoveAttributes() started", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 	defer ms.Logger.V(0).Info("session.mongo.RemoveAttributes() finished", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
 
