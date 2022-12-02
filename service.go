@@ -32,7 +32,6 @@ type sessionService struct {
 }
 
 /*
-
 NewService Create implementation of Service to work with session
 
 logr.Logger may be useful only for debugging purposes,
@@ -41,7 +40,6 @@ It's up to service that call these methods
 to decide what is really error in terms of application and what is not.
 
 reqIDKey is key to extract request id from the context
-
 */
 func NewService(s Store, l logr.Logger, reqIDKey interface{}) Service {
 	ss := sessionService{

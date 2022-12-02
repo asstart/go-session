@@ -3,28 +3,33 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"time"
 
 	"github.com/asstart/go-session"
 	"github.com/go-logr/logr"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type mongoStore struct {
-	Collecction *mongo.Collection
-	Logger      logr.Logger
-	CtxReqIDKey interface{}
+	Collecction    *mongo.Collection
+	Logger         logr.Logger
+	CustomRegistry *bsoncodec.Registry
+	CtxReqIDKey    interface{}
 }
 
 func NewMongoStore(c *mongo.Collection, l logr.Logger, reqIDKey interface{}) session.Store {
 	return &mongoStore{
-		Collecction: c,
-		Logger:      l,
-		CtxReqIDKey: reqIDKey,
+		Collecction:    c,
+		Logger:         l,
+		CustomRegistry: getCustomRegisry(),
+		CtxReqIDKey:    reqIDKey,
 	}
 }
 
@@ -114,31 +119,22 @@ func (ms *mongoStore) Save(ctx context.Context, s *session.Session) (*session.Se
 	opts = opts.SetUpsert(true)
 	opts = opts.SetReturnDocument(options.After)
 
-	sr := ms.Collecction.FindOneAndUpdate(
-		ctx,
-		f,
-		o,
-		opts,
-	)
+	var updS mngSession
+	sr := ms.Collecction.FindOneAndUpdate(ctx, f, o, opts)
+	err := decodeWithRegistry(ms.CustomRegistry, sr, &updS)
 
-	if sr.Err() != nil {
-		err := fmt.Errorf("session.mongo.Save() FindOneAndUpdate error: %w", sr.Err())
-		ms.Logger.V(0).Info(
-			"session.mongo.Save() error",
-			session.LogKeySID, s.ID,
-			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
-			session.LogKeyDebugError, err)
-		return nil, err
+	if err == mongo.ErrNoDocuments {
+		ms.Logger.V(0).Info("session.mong.Save() session not found", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+		return nil, session.ErrSessionNotFound
 	}
 
-	var updS mngSession
-	if err := sr.Decode(&updS); err != nil {
-		err = fmt.Errorf("session.mongo.Save() Decode result error: %w", err)
-		ms.Logger.V(0).Info(
-			"session.mongo.Save() error",
+	if err != nil {
+		err = fmt.Errorf("session.mong.Save() FindOneAndUpdate() unexpected error: %w", err)
+		ms.Logger.V(0).Info("session.mong.Save() session not found",
 			session.LogKeySID, s.ID,
 			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
 			session.LogKeyDebugError, err)
+
 		return nil, err
 	}
 
@@ -208,31 +204,22 @@ func (ms *mongoStore) Update(ctx context.Context, s *session.Session) (*session.
 	opts := options.FindOneAndUpdate()
 	opts = opts.SetReturnDocument(options.After)
 
-	sr := ms.Collecction.FindOneAndUpdate(
-		ctx,
-		f,
-		obj,
-		opts,
-	)
+	var updS mngSession
+	sr := ms.Collecction.FindOneAndUpdate(ctx, f, obj, opts)
+	err := decodeWithRegistry(ms.CustomRegistry, sr, &updS)
 
-	if sr.Err() == nil {
-		err := fmt.Errorf("session.mongo.Update() FindIneAndUpdate error: %w", sr.Err())
-		ms.Logger.V(0).Info(
-			"session.mongo.Update() error",
-			session.LogKeySID, s.ID,
-			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
-			session.LogKeyDebugError, err)
-		return nil, err
+	if err == mongo.ErrNoDocuments {
+		ms.Logger.V(0).Info("session.mong.Update() session not found", session.LogKeySID, s.ID, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
+		return nil, session.ErrSessionNotFound
 	}
 
-	var updS mngSession
-	if err := sr.Decode(updS); err != nil {
-		err := fmt.Errorf("session.mongo.Update() Decode error: %w", sr.Err())
-		ms.Logger.V(0).Info(
-			"session.mongo.Update() error",
+	if err != nil {
+		err = fmt.Errorf("session.mong.Update() FindOneAndUpdate() unexpected error: %w", err)
+		ms.Logger.V(0).Info("session.mong.Update() session not found",
 			session.LogKeySID, s.ID,
 			session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey),
 			session.LogKeyDebugError, err)
+
 		return nil, err
 	}
 
@@ -257,8 +244,8 @@ func (ms *mongoStore) Load(ctx context.Context, sid string) (*session.Session, e
 	opts = opts.SetReturnDocument(options.After)
 
 	s := mngSession{}
-
-	err := ms.Collecction.FindOneAndUpdate(ctx, f, upd, opts).Decode(&s)
+	sr := ms.Collecction.FindOneAndUpdate(ctx, f, upd, opts)
+	err := decodeWithRegistry(ms.CustomRegistry, sr, &s)
 
 	if err == mongo.ErrNoDocuments {
 		ms.Logger.V(0).Info("session.mong.Load() session not found", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
@@ -303,7 +290,8 @@ func (ms *mongoStore) AddAttributes(ctx context.Context, sid string, data map[st
 	opt.SetReturnDocument(options.After)
 
 	var s mngSession
-	err := ms.Collecction.FindOneAndUpdate(ctx, f, up, opt).Decode(&s)
+	sr := ms.Collecction.FindOneAndUpdate(ctx, f, up, opt)
+	err := decodeWithRegistry(ms.CustomRegistry, sr, &s)
 
 	if err == mongo.ErrNoDocuments {
 		ms.Logger.V(0).Info("session.mongo.AddAttributes() FindOneAndUpdate() session not found", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
@@ -346,7 +334,8 @@ func (ms *mongoStore) RemoveAttributes(ctx context.Context, sid string, keys ...
 	opt.SetReturnDocument(options.After)
 
 	var s mngSession
-	err := ms.Collecction.FindOneAndUpdate(ctx, f, up, opt).Decode(&s)
+	sr := ms.Collecction.FindOneAndUpdate(ctx, f, up, opt)
+	err := decodeWithRegistry(ms.CustomRegistry, sr, &s)
 
 	if err == mongo.ErrNoDocuments {
 		ms.Logger.V(0).Info("session.mongo.AddAttributes() FindOneAndUpdate() session not found", session.LogKeySID, sid, session.LogKeyRQID, ctx.Value(ms.CtxReqIDKey))
@@ -365,4 +354,29 @@ func (ms *mongoStore) RemoveAttributes(ctx context.Context, sid string, keys ...
 
 	r := fromMngSession(&s)
 	return &r, nil
+}
+
+func decodeWithRegistry(r *bsoncodec.Registry, sr *mongo.SingleResult, v interface{}) error {
+	if sr.Err() != nil {
+		return sr.Err()
+	}
+
+	raw, err := sr.DecodeBytes()
+	if err != nil {
+		return err
+	}
+
+	return bson.UnmarshalWithRegistry(getCustomRegisry(), raw, v)
+}
+
+func getCustomRegisry() *bsoncodec.Registry {
+	rb := bsoncodec.NewRegistryBuilder()
+
+	bsoncodec.DefaultValueEncoders{}.RegisterDefaultEncoders(rb)
+	bsoncodec.DefaultValueDecoders{}.RegisterDefaultDecoders(rb)
+
+	rb.RegisterTypeMapEntry(bsontype.DateTime, reflect.TypeOf(time.Time{}))
+	rb.RegisterTypeMapEntry(bson.TypeArray, reflect.TypeOf([]interface{}{}))
+
+	return rb.Build()
 }
