@@ -366,7 +366,7 @@ func decodeWithRegistry(r *bsoncodec.Registry, sr *mongo.SingleResult, v interfa
 		return err
 	}
 
-	return bson.UnmarshalWithRegistry(getCustomRegisry(), raw, v)
+	return bson.UnmarshalWithRegistry(r, raw, v)
 }
 
 func getCustomRegisry() *bsoncodec.Registry {
