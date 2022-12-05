@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"io"
+	"reflect"
 	"time"
 )
 
@@ -127,24 +128,6 @@ func (s *Session) WithSessionConf(sc Conf) {
 	s.AbsTimeout = sc.AbsTimout
 }
 
-func (s *Session) WithAttributes(attrs map[string]interface{}) {
-	for k, v := range attrs {
-		s.AddAttribute(k, v)
-	}
-}
-
-// AddAttribute add a new attribute to the session
-func (s *Session) AddAttribute(k string, v interface{}) {
-	s.Data[k] = v
-}
-
-// GetAttribute return a value from the session
-// It return nill and false if attribute doesn't exists
-func (s *Session) GetAttribute(k string) (interface{}, bool) {
-	v, ok := s.Data[k]
-	return v, ok
-}
-
 // IsExpired check if session is expired
 func (s *Session) IsExpired() bool {
 	if !s.Active {
@@ -175,6 +158,257 @@ func ValidateSessionID(sid string) error {
 	}
 	return nil
 }
+
+func (s *Session) WithAttributes(attrs map[string]interface{}) {
+	for k, v := range attrs {
+		s.AddAttribute(k, v)
+	}
+}
+
+// AddAttribute add a new attribute to the session
+func (s *Session) AddAttribute(k string, v interface{}) {
+	s.Data[k] = v
+}
+
+// GetAttribute return a value from the session
+// It return nill and false if attribute doesn't exists
+func (s *Session) GetAttribute(k string) (interface{}, bool) {
+	v, ok := s.Data[k]
+	return v, ok
+}
+
+// Should this method able to format to string value if type of it isn't string?
+func (s *Session) GetString(k string) (string, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return "", ok
+	}
+
+	switch cv := v.(type) {
+	case string:
+		return cv, true
+	default:
+		return "", false
+	}
+}
+
+func (s *Session) GetInt(k string) (int, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return 0, ok
+	}
+
+	switch cv := v.(type) {
+	case byte:
+		return int(cv), true
+	case int8:
+		return int(cv), true
+	case int16:
+		return int(cv), true
+	case int32:
+		return int(cv), true
+	case int:
+		return cv, true
+	default:
+		return 0, false
+	}
+}
+
+func (s *Session) GetInt64(k string) (int64, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return 0, ok
+	}
+
+	switch cv := v.(type) {
+	case byte:
+		return int64(cv), true
+	case int8:
+		return int64(cv), true
+	case int16:
+		return int64(cv), true
+	case int32:
+		return int64(cv), true
+	case int:
+		return int64(cv), true
+	case int64:
+		return cv, true
+	default:
+		return 0, false
+	}
+}
+
+func (s *Session) GetFloat32(k string) (float32, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return 0, ok
+	}
+
+	switch cv := v.(type) {
+	case float32:
+		return cv, true
+	default:
+		return 0.0, false
+	}
+}
+
+func (s *Session) GetFloat64(k string) (float64, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return 0, ok
+	}
+
+	switch cv := v.(type) {
+	case float32:
+		return float64(cv), true
+	case float64:
+		return cv, true
+	default:
+		return 0.0, false
+	}
+}
+
+func (s *Session) GetBool(k string) (bool, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return false, ok
+	}
+
+	switch cv := v.(type) {
+	case bool:
+		return cv, true
+	default:
+		return false, false
+	}
+}
+
+func (s *Session) GetTime(k string) (time.Time, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return time.Time{}, ok
+	}
+
+	switch cv := v.(type) {
+	case time.Time:
+		return cv, true
+	default:
+		return time.Time{}, false
+	}
+}
+
+func (s *Session) GetSlice(k string) ([]interface{}, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return nil, ok
+	}
+
+	if reflect.TypeOf(v).Kind() != reflect.Slice {
+		return nil, false
+	}
+
+	cv, _ := v.([]interface{})
+	return cv, true
+}
+
+func (s *Session) GetInt32Slice(k string) ([]int32, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return nil, ok
+	}
+
+	switch cv := v.(type) {
+	case []int32:
+		return cv, true
+	default:
+		return nil, false
+	}
+}
+
+func (s *Session) GetInt64Slice(k string) ([]int64, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return nil, ok
+	}
+
+	switch cv := v.(type) {
+	case []int64:
+		return cv, true
+	default:
+		return nil, false
+	}
+}
+
+func (s *Session) GetFloat32Slice(k string) ([]float32, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return nil, ok
+	}
+
+	switch cv := v.(type) {
+	case []float32:
+		return cv, true
+	default:
+		return nil, false
+	}
+}
+
+func (s *Session) GetFloat64Slice(k string) ([]float64, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return nil, ok
+	}
+
+	switch cv := v.(type) {
+	case []float64:
+		return cv, true
+	default:
+		return nil, false
+	}
+}
+
+func (s *Session) GetStringSlice(k string) ([]string, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return nil, ok
+	}
+
+	switch cv := v.(type) {
+	case []string:
+		return cv, true
+	default:
+		return nil, false
+	}
+}
+
+func (s *Session) GetBoolSlice(k string) ([]bool, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return nil, ok
+	}
+
+	switch cv := v.(type) {
+	case []bool:
+		return cv, true
+	default:
+		return nil, false
+	}
+}
+
+func (s *Session) GetTimeSlice(k string) ([]time.Time, bool) {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return nil, ok
+	}
+
+	switch cv := v.(type) {
+	case []time.Time:
+		return cv, true
+	default:
+		return nil, false
+	}
+}
+
+// TODO struct conversion
 
 func generateSessionID() (string, error) {
 	id := make([]byte, keyLen)
