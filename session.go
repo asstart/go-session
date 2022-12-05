@@ -268,13 +268,13 @@ func (s *Session) GetFloat64(k string) (float64, bool) {
 	}
 }
 
-func (s *Session) GetBool(k string) (bool, bool) {
-	v, ok := s.GetAttribute(k)
+func (s *Session) GetBool(k string) (v, ok bool) {
+	vl, ok := s.GetAttribute(k)
 	if !ok {
 		return false, ok
 	}
 
-	switch cv := v.(type) {
+	switch cv := vl.(type) {
 	case bool:
 		return cv, true
 	default:
