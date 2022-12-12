@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/asstart/go-session"
+	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -77,7 +78,7 @@ func TestCastIntAttributes(t *testing.T) {
 		{"int16 as int", "int16", int16(8), true, 8, reflect.TypeOf(int(0))},
 		{"int32 as int", "int32", int32(8), true, 8, reflect.TypeOf(int(0))},
 		{"int as int", "int", int(8), true, 8, reflect.TypeOf(int(0))},
-		{"int64 as int", "int64", int64(8), false, 0, reflect.TypeOf(int(0))},
+		{"int64 as int", "int64", int64(8), true, 0, reflect.TypeOf(int(0))},
 		{"string as int", "string", "va", false, 0, reflect.TypeOf(int(0))},
 		{"bool as int", "bool", true, false, 0, reflect.TypeOf(int(0))},
 		{"time.Time as int", "time.Time", time.Now(), false, 0, reflect.TypeOf(int(0))},
@@ -391,10 +392,10 @@ func TestCastSliceInt64Attributes(t *testing.T) {
 		{"float32 as []int64{}", "float32", float32(1.1), false, nil, reflect.TypeOf([]int64{})},
 		{"float64 as []int64{}", "float64", float64(1.1), false, nil, reflect.TypeOf([]int64{})},
 		{"[]interface{} as []int64{}", "[]interface{}", []interface{}{1, 2, 3}, false, nil, reflect.TypeOf([]int64{})},
-		{"[]int as []int{}", "[]int64", []int{1, 2, 3}, false, nil, reflect.TypeOf([]int64{})},
-		{"[]int(int64 actually) as []int", "[]int64", []int{10000000000, 10000000001, 10000000002}, false, nil, reflect.TypeOf([]int64{})},
-		{"[]32int as []int{}", "[]int64", []int32{1, 2, 3}, false, nil, reflect.TypeOf([]int64{})},
-		{"[]64int as []int{}", "[]int64", []int64{1, 2, 3}, true, []int64{1, 2, 3}, reflect.TypeOf([]int64{})},
+		{"[]int as []int64{}", "[]int64", []int{1, 2, 3}, false, nil, reflect.TypeOf([]int64{})},
+		{"[]int(int64 actually) as []int64", "[]int64", []int{10000000000, 10000000001, 10000000002}, false, nil, reflect.TypeOf([]int64{})},
+		{"[]int32 as []int64{}", "[]int64", []int32{1, 2, 3}, false, nil, reflect.TypeOf([]int64{})},
+		{"[]int64 as []int64{}", "[]int64", []int64{1, 2, 3}, true, []int64{1, 2, 3}, reflect.TypeOf([]int64{})},
 		{"[]string as []int64{}", "[]string", []string{"1", "2", "3"}, false, nil, reflect.TypeOf([]int64{})},
 	}
 
@@ -588,6 +589,118 @@ func TestCastSliceTimeAttributes(t *testing.T) {
 			v, ok := s.GetTimeSlice(tc.key)
 			assert.Equal(t, tc.expectedOk, ok)
 			assert.Equal(t, tc.expectedType, reflect.TypeOf(v))
+		})
+	}
+}
+
+func TestDecodeStructFromStruct(t *testing.T) {
+	type TestStr struct {
+		ID    string
+		Value string
+	}
+
+	s, err := session.NewSession()
+	assert.Nil(t, err)
+
+	attrKey := "key"
+
+	obj := TestStr{
+		ID:    "1",
+		Value: "value",
+	}
+
+	s.AddAttribute(attrKey, obj)
+
+	var res TestStr
+	ok := s.GetStruct(attrKey, &res)
+	assert.True(t, ok)
+	assert.IsType(t, TestStr{}, res)
+	assert.Equal(t, "1", res.ID)
+	assert.Equal(t, "value", res.Value)
+}
+
+func TestDecodeStructFromMap(t *testing.T) {
+	type TestStr struct {
+		ID    string
+		Value string
+	}
+
+	tt := []struct {
+		name     string
+		data     map[string]interface{}
+		expected TestStr
+	}{
+		{"match struct case and map keys case", map[string]interface{}{"ID": "1", "Value": "value"}, TestStr{ID: "1", Value: "value"}},
+		{"lower case map keys", map[string]interface{}{"id": "1", "value": "value"}, TestStr{ID: "1", Value: "value"}},
+		{"upper case map keys", map[string]interface{}{"ID": "1", "VALUE": "value"}, TestStr{ID: "1", Value: "value"}},
+		{"random case map keys", map[string]interface{}{"iD": "1", "VaLuE": "value"}, TestStr{ID: "1", Value: "value"}},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			attrKey := "key"
+			s, err := session.NewSession()
+			assert.Nil(t, err)
+			s.AddAttribute(attrKey, tc.data)
+			var res TestStr
+			ok := s.GetStruct(attrKey, &res)
+			assert.True(t, ok)
+			assert.Equal(t, tc.expected.ID, res.ID)
+			assert.Equal(t, tc.expected.Value, res.Value)
+		})
+	}
+}
+
+func TestDecodeStructFromMapWithTags(t *testing.T) {
+	type TestStr struct {
+		ID    string `mapstructure:"custom_id"`
+		Value string `mapstructure:"custom_value"`
+	}
+
+	attrKey := "key"
+	s, err := session.NewSession()
+	assert.Nil(t, err)
+	s.AddAttribute(attrKey, map[string]interface{}{"custom_id": "1", "custom_value": "value"})
+	var res TestStr
+	ok := s.GetStruct(attrKey, &res)
+	assert.True(t, ok)
+	assert.Equal(t, "1", res.ID)
+	assert.Equal(t, "value", res.Value)
+}
+
+func TestDecodeStructFromMapWithCustomDecoder(t *testing.T) {
+	type TestStr struct {
+		ID       string
+		WeakTrue bool
+	}
+
+	tt := []struct {
+		name     string
+		data     map[string]interface{}
+		expected TestStr
+	}{
+		{"match struct case and map keys case", map[string]interface{}{"Id": "1", "WeakTrue": "true"}, TestStr{ID: "1", WeakTrue: true}},
+		{"lower case map keys", map[string]interface{}{"id": "1", "weaktrue": "true"}, TestStr{ID: "1", WeakTrue: true}},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			attrKey := "key"
+			s, err := session.NewSession()
+			assert.Nil(t, err)
+			s.AddAttribute(attrKey, tc.data)
+			var res TestStr
+			decoder, err := mapstructure.NewDecoder(
+				&mapstructure.DecoderConfig{
+					Metadata:         nil,
+					Result:           &res,
+					WeaklyTypedInput: true,
+				})
+			assert.Nil(t, err)
+			ok := s.GetStructWithDecoder(attrKey, decoder)
+			assert.True(t, ok)
+			assert.Equal(t, tc.expected.ID, res.ID)
+			assert.Equal(t, tc.expected.WeakTrue, res.WeakTrue)
 		})
 	}
 }

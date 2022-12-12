@@ -7,6 +7,8 @@ import (
 	"io"
 	"reflect"
 	"time"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 // Session is representation of session in terms of current module.
@@ -177,7 +179,8 @@ func (s *Session) GetAttribute(k string) (interface{}, bool) {
 	return v, ok
 }
 
-// Should this method able to format to string value if type of it isn't string?
+// GetString return a value as string from the session by key
+// If value isn't a string, it won't be converted
 func (s *Session) GetString(k string) (string, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -192,6 +195,9 @@ func (s *Session) GetString(k string) (string, bool) {
 	}
 }
 
+// GetInt return a value as int from the session by key
+// if Value one of (byte/int8, int16, int32, int64, int)
+// return (0, false) otherwise
 func (s *Session) GetInt(k string) (int, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -207,6 +213,8 @@ func (s *Session) GetInt(k string) (int, bool) {
 		return int(cv), true
 	case int32:
 		return int(cv), true
+	case int64:
+		return int(cv), true
 	case int:
 		return cv, true
 	default:
@@ -214,6 +222,9 @@ func (s *Session) GetInt(k string) (int, bool) {
 	}
 }
 
+// GetInt64 return a value as int64 from the session by key
+// if Value one of (byte/int8, int16, int32, int64, int)
+// return (0, false) otherwise
 func (s *Session) GetInt64(k string) (int64, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -238,6 +249,9 @@ func (s *Session) GetInt64(k string) (int64, bool) {
 	}
 }
 
+// GetFloat32 return a value as float32 from the session by key
+// if Value is float32
+// return (0.0, false) otherwise
 func (s *Session) GetFloat32(k string) (float32, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -252,6 +266,9 @@ func (s *Session) GetFloat32(k string) (float32, bool) {
 	}
 }
 
+// GetFloat64 return a value as float64 from the session by key
+// if Value is one of (float32, float64)
+// return (0.0, false) otherwise
 func (s *Session) GetFloat64(k string) (float64, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -268,6 +285,9 @@ func (s *Session) GetFloat64(k string) (float64, bool) {
 	}
 }
 
+// GetBool return a value as bool from the session by key
+// if Value is bool
+// return (false, false) otherwise
 func (s *Session) GetBool(k string) (v, ok bool) {
 	vl, ok := s.GetAttribute(k)
 	if !ok {
@@ -282,6 +302,9 @@ func (s *Session) GetBool(k string) (v, ok bool) {
 	}
 }
 
+// GetTime return a value as time.Time from the session by key
+// if Value is time.Time
+// return (time.Time{}, false) otherwise
 func (s *Session) GetTime(k string) (time.Time, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -296,6 +319,9 @@ func (s *Session) GetTime(k string) (time.Time, bool) {
 	}
 }
 
+// GetSlice return a value as []interface{} from the session by key
+// if Value is slice
+// return (nil, false) otherwise
 func (s *Session) GetSlice(k string) ([]interface{}, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -310,6 +336,10 @@ func (s *Session) GetSlice(k string) ([]interface{}, bool) {
 	return cv, true
 }
 
+// GetInt32Slice return a value as []int32 from the session by key
+// if Value is []int32
+// (it won't be converted to []int32, if slice has type of another int)
+// return (nil, false) otherwise
 func (s *Session) GetInt32Slice(k string) ([]int32, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -324,6 +354,10 @@ func (s *Session) GetInt32Slice(k string) ([]int32, bool) {
 	}
 }
 
+// GetInt64Slice return a value as []int64 from the session by key
+// if Value is []int64
+// (it won't be converted to []int64, if slice has type of another int)
+// return (nil, false) otherwise
 func (s *Session) GetInt64Slice(k string) ([]int64, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -338,6 +372,9 @@ func (s *Session) GetInt64Slice(k string) ([]int64, bool) {
 	}
 }
 
+// GetFloat32Slice return a value as []float32 from the session by key
+// if Value is []float32
+// return (nil, false) otherwise
 func (s *Session) GetFloat32Slice(k string) ([]float32, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -352,6 +389,10 @@ func (s *Session) GetFloat32Slice(k string) ([]float32, bool) {
 	}
 }
 
+// GetFloat64Slice return a value as []float64 from the session by key
+// if Value is []float64
+// (it won't be converted to []float64, if slice has type float32)
+// return (nil, false) otherwise
 func (s *Session) GetFloat64Slice(k string) ([]float64, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -366,6 +407,9 @@ func (s *Session) GetFloat64Slice(k string) ([]float64, bool) {
 	}
 }
 
+// GetStringSlice return a value as []string from the session by key
+// if Value is []string
+// return (nil, false) otherwise
 func (s *Session) GetStringSlice(k string) ([]string, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -380,6 +424,9 @@ func (s *Session) GetStringSlice(k string) ([]string, bool) {
 	}
 }
 
+// GetBoolSlice return a value as []bool from the session by key
+// if Value is []bool
+// return (nil, false) otherwise
 func (s *Session) GetBoolSlice(k string) ([]bool, bool) {
 	v, ok := s.GetAttribute(k)
 	if !ok {
@@ -394,13 +441,16 @@ func (s *Session) GetBoolSlice(k string) ([]bool, bool) {
 	}
 }
 
+// GetTimeSlice return a value as []time.Time from the session by key
+// if Value is []time.Time
+// return (nil, false) otherwise
 func (s *Session) GetTimeSlice(k string) ([]time.Time, bool) {
-	v, ok := s.GetAttribute(k)
+	mapV, ok := s.GetAttribute(k)
 	if !ok {
 		return nil, ok
 	}
 
-	switch cv := v.(type) {
+	switch cv := mapV.(type) {
 	case []time.Time:
 		return cv, true
 	default:
@@ -408,7 +458,33 @@ func (s *Session) GetTimeSlice(k string) ([]time.Time, bool) {
 	}
 }
 
-// TODO struct conversion
+// GetStruct convert map or struct from the session by key
+// and write result to out
+// return (false otherwise
+//
+// to convert value from session to a struct is using
+// https://pkg.go.dev/github.com/mitchellh/mapstructure underneath
+// so, other its features like tags can be used here
+func (s *Session) GetStruct(k string, out interface{}) bool {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return false
+	}
+	err := mapstructure.Decode(v, out)
+	return err == nil
+}
+
+// GetStructWithDecoder convert map or struct from the session by key
+// with custom mapstructure.Decoder (https://pkg.go.dev/github.com/mitchellh/mapstructure)
+// return false otherwise
+func (s *Session) GetStructWithDecoder(k string, decoder *mapstructure.Decoder) bool {
+	v, ok := s.GetAttribute(k)
+	if !ok {
+		return false
+	}
+	err := decoder.Decode(v)
+	return err == nil
+}
 
 func generateSessionID() (string, error) {
 	id := make([]byte, keyLen)
